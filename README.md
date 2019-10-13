@@ -79,7 +79,7 @@ There is room for 32 different instructions:
 ```
 
 ## Online simulator and assembler
-There is an online processor simulator and assembler available at neva-processor.ml
+There is an online processor simulator and assembler available at [neva-processor.ml](https://neva-processor.ml/)
 
 
 ## Assembler for Logism
