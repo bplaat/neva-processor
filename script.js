@@ -311,6 +311,10 @@ assembly_input.onkeydown = function (event) {
     }
 };
 
+assembly_input.oninput = function () {
+    localStorage.assembly = assembly_input.value;
+};
+
 function reset_and_assemble () {
     reset();
     zero_memory = false;
@@ -356,6 +360,10 @@ auto_clock_input.onchange = function () {
 };
 
 reset();
+
+if (localStorage.assembly != undefined) {
+    assembly_input.value = localStorage.assembly;
+}
 
 if (localStorage.dark_mode == 'true') {
     document.body.classList.add('dark');
