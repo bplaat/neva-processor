@@ -112,7 +112,7 @@ function assembler(data) {
 
 var mem = new Uint8ClampedArray(256), zero_memory,
     halted, step, instruction_byte, data_byte,
-    instruction_pointer, registers = new Uint8ClampedArray(2),
+    instruction_pointer, registers = new Uint8Array(2),
     carry_flag, zero_flag, timeout, just_run = false,
     clock_freq = parseInt(clock_freq_input.value);
 
@@ -298,6 +298,18 @@ function clock_cycle () {
         timeout = setTimeout(clock_cycle, 1000 / clock_freq);
     }
 }
+
+assembly_input.onkeydown = function (event) {
+    if (event.keyCode === 9) {
+        var start = this.selectionStart;
+        var end = this.selectionEnd;
+        var target = event.target;
+        var value = target.value;
+        target.value = value.substring(0, start) + '    ' + value.substring(end);
+        this.selectionStart = this.selectionEnd = start + 4;
+        event.preventDefault();
+    }
+};
 
 function reset_and_assemble () {
     reset();
