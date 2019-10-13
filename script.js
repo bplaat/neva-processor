@@ -30,7 +30,7 @@ function pad_string(string, length, char) {
 
 function format_byte(number) {
     var hex = number.toString(16);
-    return number < 15 ? '0' + hex : hex;
+    return number < 16 ? '0' + hex : hex;
 }
 
 function format_boolean(boolean) {
