@@ -1,21 +1,11 @@
 var opcodes = {
     'nop': 0,
 
-    'load': 1,
-    'store': 2,
+    'load': 1, 'store': 2,
 
-    'add': 3,
-    'adc': 4,
-    'sub': 5,
-    'sbb': 6,
-    'cmp': 7,
+    'add': 3, 'adc': 4, 'sub': 5, 'sbb': 6, 'cmp': 7,
 
-    'and': 8,
-    'or': 9,
-    'xor': 10,
-    'not': 11,
-    'shl': 12,
-    'shr': 13,
+    'and': 8, 'or': 9, 'xor': 10, 'not': 11, 'shl': 12, 'shr': 13,
 
     'jmp': 14,
     'jc': 15, 'jb': 15, 'jnae': 15,
@@ -94,24 +84,20 @@ function assembler(data) {
     return output;
 }
 
-
-var clock_freq = parseInt(clock_freq_input.value);
-
-
-var mem = new Uint8ClampedArray(256);
-
-var halted, step, instruction_byte, data_byte,
+var mem = new Uint8ClampedArray(256),
+    halted, step, instruction_byte, data_byte,
     instruction_pointer, registers = new Uint8ClampedArray(2),
-    carry_flag, zero_flag, timeout, just_run = false;
+    carry_flag, zero_flag, timeout,
+    clock_freq = parseInt(clock_freq_input.value);
 
 function format_byte(number) {
     var hex = number.toString(16);
     return number < 15 ? '0' + hex : hex;
 }
+
 function format_boolean(boolean) {
     return boolean ? 't' : 'f';
 }
-
 
 function update_labels() {
     halted_label.textContent = format_boolean(halted);
@@ -152,12 +138,7 @@ function reset () {
     auto_clock_input.checked = false;
     output_label.value = '';
 
-    for (var i = 0; i < 256; i++) {
-        mem[i] = 0;
-    }
-
     update_labels();
-
 }
 
 function clock_cycle () {
@@ -285,9 +266,7 @@ function clock_cycle () {
         }
     }
 
-    if (!just_run) {
-        update_labels();
-    }
+    update_labels();
 
     if (auto_clock_input.checked) {
         timeout = setTimeout(clock_cycle, 1000 / clock_freq);
@@ -318,11 +297,9 @@ function reset_and_assemble () {
 assemble_button.onclick = reset_and_assemble;
 
 function run_program() {
-    just_run = true;
     while (!halted) {
         clock_cycle();
     }
-    just_run = false;
 }
 
 run_button.onclick = run_program;

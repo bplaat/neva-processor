@@ -28,11 +28,16 @@ body {
 
 h1 {
     margin: 0;
-    font-weight: 500;
+    font-size: 32px;
+    font-weight: 700;
 }
 
 p {
     margin: 4px 0;
+}
+
+a {
+    color: #16c;
 }
 
 textarea {
