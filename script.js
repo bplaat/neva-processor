@@ -100,13 +100,45 @@ var clock_freq = parseInt(clock_freq_input.value);
 
 var mem = new Uint8ClampedArray(256);
 
-mem[0x0fe] = opcodes.halt << 3;
+var halted, step, instruction_byte, data_byte,
+    instruction_pointer, registers = new Uint8ClampedArray(2),
+    carry_flag, zero_flag, timeout, just_run = false;
 
-var stop_running, instruction_pointer, step, instruction_byte,
-    data_byte, registers = new Uint8ClampedArray(2), carry_flag, zero_flag;
+function format_byte(number) {
+    var hex = number.toString(16);
+    return number < 15 ? '0' + hex : hex;
+}
+function format_boolean(boolean) {
+    return boolean ? 't' : 'f';
+}
+
+
+function update_labels() {
+    halted_label.textContent = format_boolean(halted);
+    step_label.textContent = step;
+    instruction_byte_label.textContent = format_byte(instruction_byte);
+    data_byte_label.textContent = format_byte(data_byte);
+    instruction_pointer_label.textContent = format_byte(instruction_pointer);
+    register_a_label.textContent = format_byte(registers[0]);
+    register_b_label.textContent = format_byte(registers[1]);
+    carry_flag_label.textContent = format_boolean(carry_flag);
+    zero_flag_label.textContent = format_boolean(zero_flag);
+
+    memory_label.value = '';
+    var count = 0;
+    for (var i = 0; i < 256; i++) {
+        memory_label.value += format_byte(mem[i]) + ' ';
+        if (count == 7) {
+            memory_label.value += '\n';
+            count = 0;
+        } else {
+            count++;
+        }
+    }
+}
 
 function reset () {
-    stop_running = false;
+    halted = false;
     instruction_pointer = 0;
     step = 0;
     instruction_byte = 0;
@@ -116,14 +148,20 @@ function reset () {
     carry_flag = false;
     zero_flag = false;
 
+    clearTimeout(timeout);
     auto_clock_input.checked = false;
-    binary_input.value = '';
-    memory_label.value = '';
     output_label.value = '';
+
+    for (var i = 0; i < 256; i++) {
+        mem[i] = 0;
+    }
+
+    update_labels();
+
 }
 
 function clock_cycle () {
-    if (stop_running) return;
+    if (halted) return;
     if (instruction_pointer >= 255) instruction_pointer -= 255;
 
     if (step == 0) {
@@ -132,13 +170,13 @@ function clock_cycle () {
         instruction_pointer++;
     }
 
-    if (step == 1) {
+    else if (step == 1) {
         step++;
         data_byte = mem[instruction_pointer];
         instruction_pointer++;
     }
 
-    if (step == 2) {
+    else if (step == 2) {
         step = 0;
 
         var opcode = instruction_byte >> 3;
@@ -192,7 +230,7 @@ function clock_cycle () {
         }
         if (opcode == opcodes.cmp) {
             carry_flag = registers[register] - data < 0;
-            zero_flag = registers[register] == 0;
+            zero_flag = registers[register] - data == 0;
         }
 
         if (opcode == opcodes.and) {
@@ -243,23 +281,24 @@ function clock_cycle () {
         }
 
         if (opcode == opcodes.halt) {
-            stop_running = true;
+            halted = true;
         }
     }
 
+    if (!just_run) {
+        update_labels();
+    }
+
     if (auto_clock_input.checked) {
-        setTimeout(clock_cycle, 1000 / clock_freq);
+        timeout = setTimeout(clock_cycle, 1000 / clock_freq);
     }
 }
 
 reset();
 
-assembler_button.onclick = function () {
+function reset_and_assemble () {
+    reset();
     var output = assembler(assembly_input.value);
-
-    for (var i = 0; i < output.length; i++) {
-        mem[i] = output[i];
-    }
 
     binary_input.value = '';
     for (var i = 0; i < output.length; i += 2) {
@@ -269,23 +308,28 @@ assembler_button.onclick = function () {
             output[i + 1].toString(2).padStart(8, '0') + '\n';
     }
 
-    memory_label.value = '';
-    var q = 0;
-    for (var i = 0; i < 256; i++) {
-        memory_label.value += (mem[i] < 15 ? '0' + mem[i].toString(16) : mem[i].toString(16)) + ' ';
-        if (q == 7) {
-            memory_label.value += '\n';
-            q = 0;
-        } else {
-            q++;
-        }
+    for (var i = 0; i < output.length; i++) {
+        mem[i] = output[i];
     }
-};
 
-run_button.onclick = function () {
-    while (!stop_running) {
+    update_labels();
+}
+
+assemble_button.onclick = reset_and_assemble;
+
+function run_program() {
+    just_run = true;
+    while (!halted) {
         clock_cycle();
     }
+    just_run = false;
+}
+
+run_button.onclick = run_program;
+
+assemble_and_run_button.onclick = function () {
+    reset_and_assemble();
+    run_program();
 };
 
 reset_button.onclick = reset;

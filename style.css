@@ -4,10 +4,16 @@ body, input, button, select {
     line-height: 1.5;
 }
 
-textarea {
+code, textarea {
     font-family: 'Roboto Mono', monospace;
     font-size: 16px;
     line-height: 1.5;
+}
+
+code {
+    background-color: #eee;
+    padding: 1px 8px;
+    border-radius: 4px;
 }
 
 html, body {
@@ -23,6 +29,10 @@ body {
 h1 {
     margin: 0;
     font-weight: 500;
+}
+
+p {
+    margin: 4px 0;
 }
 
 textarea {
