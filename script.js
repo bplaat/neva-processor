@@ -20,9 +20,29 @@ var opcodes = {
 
 var registers_names = { 'a' : 0, 'b' : 1 };
 
+function pad_string(string, length, char) {
+    var pad = '';
+    for (var i = 0; i < length -string.length; i++) {
+        pad += char;
+    }
+    return pad + string;
+}
+
+function format_byte(number) {
+    var hex = number.toString(16);
+    return number < 15 ? '0' + hex : hex;
+}
+
+function format_boolean(boolean) {
+    return boolean ? 't' : 'f';
+}
+
 function assembler(data) {
     var output = [];
     var lines = data.split('\n');
+
+    binary_input.value = '';
+
     for (var i = 0; i < lines.length; i++) {
         var parts = lines[i].replace(/;.*/, '').trim().split(/\s+/);
         if (parts[0] != '') {
@@ -79,7 +99,13 @@ function assembler(data) {
                 }
             }
             output.push(instruction[0], instruction[1]);
+
+            binary_input.value += pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
+                ((instruction[0] >> 2) & 1).toString(2) + ' ' +
+                pad_string((instruction[0] & 3).toString(2), 2, '0') + '  ' +
+                pad_string(instruction[1].toString(2), 8, '0');
         }
+        binary_input.value += '\n';
     }
     return output;
 }
@@ -89,15 +115,6 @@ var mem = new Uint8ClampedArray(256),
     instruction_pointer, registers = new Uint8ClampedArray(2),
     carry_flag, zero_flag, timeout,
     clock_freq = parseInt(clock_freq_input.value);
-
-function format_byte(number) {
-    var hex = number.toString(16);
-    return number < 15 ? '0' + hex : hex;
-}
-
-function format_boolean(boolean) {
-    return boolean ? 't' : 'f';
-}
 
 function update_labels() {
     halted_label.textContent = format_boolean(halted);
@@ -273,18 +290,12 @@ function clock_cycle () {
     }
 }
 
-reset();
-
 function reset_and_assemble () {
     reset();
     var output = assembler(assembly_input.value);
 
-    binary_input.value = '';
-    for (var i = 0; i < output.length; i += 2) {
-        binary_input.value += (output[i] >> 3).toString(2).padStart(5, '0') + ' ' +
-            ((output[i] >> 2) & 1).toString(2).padStart(1, '0') + ' ' +
-            (output[i] & 3).toString(2).padStart(2, '0') + '  ' +
-            output[i + 1].toString(2).padStart(8, '0') + '\n';
+    for (var i = 0; i < 256; i++) {
+        mem[i] = 0;
     }
 
     for (var i = 0; i < output.length; i++) {
@@ -322,3 +333,5 @@ clock_freq_input.onchange = function () {
 auto_clock_input.onchange = function () {
     clock_cycle();
 };
+
+reset();
