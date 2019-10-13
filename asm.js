@@ -1,10 +1,6 @@
 // A simple assembler for the neva 8-bit processor
 // Use: node asm.js test.asm
 
-var fs = require('fs');
-
-var data = fs.readFileSync(process.argv[2]).toString();
-
 var opcodes = {
     'nop': 0,
 
@@ -25,17 +21,21 @@ var opcodes = {
     'shr': 13,
 
     'jmp': 14,
-    'jc': 15, 'jb': 15,
+    'jc': 15, 'jb': 15, 'jnae': 15,
     'jnc': 16, 'jnb': 16, 'jae': 16,
     'jz': 17, 'je': 17,
     'jnz': 18, 'jne': 18,
-    'ja': 19,
+    'ja': 19, 'jnbe': 19,
     'jna': 20, 'jbe': 20,
 
     'halt': 31
 };
 
 var registers = { 'a': 0, 'b': 1 };
+
+var fs = require('fs');
+
+var data = fs.readFileSync(process.argv[2]).toString();
 
 var output = [];
 

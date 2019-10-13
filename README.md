@@ -50,12 +50,14 @@ There is room for 32 different instructions:
 1 = load = reg = data
 2 = store = mem[data (must be in addressing mode)] = reg
 
+-- effects carray flag and zero flag
 3 = add = reg += data
 4 = adc = reg += data + carry
 5 = sub = reg -= data
 6 = sbb = reg -= data - carry
 7 = cmp = reg - data (set only flags)
 
+-- effects zero flag
 8 = and = reg &= data
 9 = or = reg |= data
 10 = xor = reg ^= data
