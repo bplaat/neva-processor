@@ -41,7 +41,7 @@ function assembler(data) {
     var output = [];
     var lines = data.split('\n');
 
-    binary_input.value = '';
+    binary_label.value = '';
 
     for (var i = 0; i < lines.length; i++) {
         var parts = lines[i].replace(/;.*/, '').trim().split(/\s+/);
@@ -100,20 +100,20 @@ function assembler(data) {
             }
             output.push(instruction[0], instruction[1]);
 
-            binary_input.value += pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
+            binary_label.value += pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
                 ((instruction[0] >> 2) & 1).toString(2) + ' ' +
                 pad_string((instruction[0] & 3).toString(2), 2, '0') + '  ' +
                 pad_string(instruction[1].toString(2), 8, '0');
         }
-        binary_input.value += '\n';
+        binary_label.value += '\n';
     }
     return output;
 }
 
-var mem = new Uint8ClampedArray(256),
+var mem = new Uint8ClampedArray(256), zero_memory,
     halted, step, instruction_byte, data_byte,
     instruction_pointer, registers = new Uint8ClampedArray(2),
-    carry_flag, zero_flag, timeout,
+    carry_flag, zero_flag, timeout, just_run = false,
     clock_freq = parseInt(clock_freq_input.value);
 
 function update_labels() {
@@ -131,7 +131,7 @@ function update_labels() {
     var count = 0;
     for (var i = 0; i < 256; i++) {
         memory_label.value += format_byte(mem[i]) + ' ';
-        if (count == 7) {
+        if (count == 7 && i != 255) {
             memory_label.value += '\n';
             count = 0;
         } else {
@@ -151,8 +151,14 @@ function reset () {
     carry_flag = false;
     zero_flag = false;
 
+    zero_memory = true;
+    for (var i = 0; i < 256; i++) {
+        mem[i] = 0;
+    }
+
     clearTimeout(timeout);
     auto_clock_input.checked = false;
+    binary_label.value = '';
     output_label.value = '';
 
     update_labels();
@@ -160,7 +166,10 @@ function reset () {
 
 function clock_cycle () {
     if (halted) return;
-    if (instruction_pointer >= 255) instruction_pointer -= 255;
+
+    if (instruction_pointer >= 255) {
+        instruction_pointer -= 255;
+    }
 
     if (step == 0) {
         step++;
@@ -283,7 +292,7 @@ function clock_cycle () {
         }
     }
 
-    update_labels();
+    if (!just_run) update_labels();
 
     if (auto_clock_input.checked) {
         timeout = setTimeout(clock_cycle, 1000 / clock_freq);
@@ -292,24 +301,24 @@ function clock_cycle () {
 
 function reset_and_assemble () {
     reset();
+    zero_memory = false;
     var output = assembler(assembly_input.value);
-
-    for (var i = 0; i < 256; i++) {
-        mem[i] = 0;
-    }
-
     for (var i = 0; i < output.length; i++) {
         mem[i] = output[i];
     }
-
     update_labels();
 }
 
 assemble_button.onclick = reset_and_assemble;
 
 function run_program() {
-    while (!halted) {
-        clock_cycle();
+    if (!zero_memory) {
+        just_run = true;
+        while (!halted) {
+            clock_cycle();
+        }
+        update_labels();
+        just_run = false;
     }
 }
 
@@ -335,3 +344,17 @@ auto_clock_input.onchange = function () {
 };
 
 reset();
+
+if (localStorage.dark_mode == 'true') {
+    document.body.classList.add('dark');
+    dark_mode_input.checked = true;
+}
+
+dark_mode_input.onchange = function () {
+    if (dark_mode_input.checked) {
+        document.body.classList.add('dark');
+    } else {
+        document.body.classList.remove('dark');
+    }
+    localStorage.dark_mode = dark_mode_input.checked;
+};

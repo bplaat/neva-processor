@@ -29,7 +29,6 @@ body {
 h1 {
     margin: 0;
     font-size: 32px;
-    font-weight: 700;
 }
 
 p {
@@ -49,4 +48,26 @@ textarea {
 textarea:disabled {
     background-color: #eee;
     color: #333;
+}
+
+.dark {
+    background-color: #111;
+    color: #fff;
+}
+
+.dark a {
+    color: #5af;
+}
+
+.dark code {
+    background-color: #333;
+}
+
+.dark textarea {
+    background-color: #111;
+    color: #fff;
+}
+.dark textarea:disabled {
+    background-color: #222;
+    color: #fff;
 }

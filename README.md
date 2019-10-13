@@ -77,5 +77,10 @@ There is room for 32 different instructions:
 
 31 = halt
 ```
-## Assembler
+
+## Online simulator and assembler
+There is an online processor simulator and assembler available at neva-processor.ml
+
+
+## Assembler for Logism
 The file `asm.js` contains a simple assembler written in JavaScript, you need [Node.js](https://nodejs.org/) to use this

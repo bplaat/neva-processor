@@ -10,7 +10,9 @@
     <div style="display:flex;flex-direction:column;height:100%">
         <div style="display:flex">
             <h1>The Neva 8-bit Processor (<a href="design.circ">Logism Design</a>)</h1>
-            <div style="flex:1;text-align:right;margin-right:16px;line-height:48px">Made by <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></div>
+            <div style="flex:1;"></div>
+            <div style="margin-right:16px;line-height:48px"><a href="https://github.com/bplaat/neva-processor">Souce code (Github)</a></div>
+            <div style="margin-right:16px;line-height:48px">Made by <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></div>
         </div>
         <div style="border: 1px solid black">
 
@@ -33,19 +35,40 @@
                 <option value="1">1 Hz</option>
             </select>
 
-            <input type="checkbox" id="auto_clock_input"><label for="auto_clock">Auto clock</label>
+            <input type="checkbox" id="auto_clock_input"><label for="auto_clock_input">Auto clock</label>
+
+            <div style="float:right;line-height: 36px;margin-right: 16px;">
+                <input type="checkbox" id="dark_mode_input"><label for="dark_mode_input">Dark mode</label>
+            </div>
         </div>
 
         <div style="flex:1;display:flex">
-            <textarea id="assembly_input" style="flex:1;">    add a, 1
+            <textarea id="assembly_input" style="flex:1;">    ; A simple test program
+    add a, 1
     load b, a
     add b, 0x30
     store b, [0xff]
     cmp a, 9
     jne 0
+
+    load a, 10
+    store a, [0xff]
+
+    load a, 0xff
+    LOAD b, 0x28
+    add b, 0x20
+    store b, [a]
+    LOAD b, 0x41
+    store b, [a]
+    LOAD b, 0x2c
+    add b, 0x20
+    store b, [a]
+    store b, [a]
+    LOAD b, 0x4f
+    store b, [a]
     halt</textarea>
 
-            <textarea id="binary_input" disabled style="flex:1"></textarea>
+            <textarea id="binary_label" disabled style="flex:1"></textarea>
 
             <div style="flex:1;display:flex;flex-direction:column">
                 <div style="flex:2;display:flex;flex-direction:column">
