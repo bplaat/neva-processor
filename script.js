@@ -103,7 +103,8 @@ function assembler(data) {
             binary_label.value += pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
                 ((instruction[0] >> 2) & 1).toString(2) + ' ' +
                 pad_string((instruction[0] & 3).toString(2), 2, '0') + '  ' +
-                pad_string(instruction[1].toString(2), 8, '0');
+                pad_string(instruction[1].toString(2), 8, '0') + ' | ' +
+                format_byte(instruction[0]) + ' ' + format_byte(instruction[1]);
         }
         binary_label.value += '\n';
     }

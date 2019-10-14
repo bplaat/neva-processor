@@ -1,24 +1,15 @@
-// A simple assembler for the neva 8-bit processor
+// A simple assembler for the Logism Neva 8-bit processor
+// You need Node.js (https://nodejs.org/) to run this program
 // Use: node asm.js test.asm
 
 var opcodes = {
     'nop': 0,
 
-    'load': 1,
-    'store': 2,
+    'load': 1, 'store': 2,
 
-    'add': 3,
-    'adc': 4,
-    'sub': 5,
-    'sbb': 6,
-    'cmp': 7,
+    'add': 3, 'adc': 4, 'sub': 5, 'sbb': 6, 'cmp': 7,
 
-    'and': 8,
-    'or': 9,
-    'xor': 10,
-    'not': 11,
-    'shl': 12,
-    'shr': 13,
+    'and': 8, 'or': 9, 'xor': 10, 'not': 11, 'shl': 12, 'shr': 13,
 
     'jmp': 14,
     'jc': 15, 'jb': 15, 'jnae': 15,
