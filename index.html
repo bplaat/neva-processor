@@ -7,17 +7,17 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div style="display:flex;flex-direction:column;height:100%">
-        <div style="display:flex;padding:0 16px">
+    <div class="app">
+        <div class="header">
             <h1>The Neva 8-bit Processor (<a href="design.circ">Logism Design</a>)</h1>
-            <div style="flex:1;"></div>
-            <div style="margin-right:16px;line-height:48px"><a href="https://github.com/bplaat/neva-processor">Souce code (GitHub)</a></div>
-            <div style="line-height:48px">Made by <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></div>
+            <div class="flex"></div>
+            <div class="header-link"><a href="https://github.com/bplaat/neva-processor">Souce code (GitHub)</a></div>
+            <div class="header-link">Made by <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></div>
         </div>
-        <div style="border: 1px solid black">
+        <div class="toolbar">
             <button id="assemble_button">Assemble</button>
             <button id="run_button">Run</button>
-            <button style="margin-right: 16px;" id="assemble_and_run_button">Assemble & Run</button>
+            <button class="button-seperation" id="assemble_and_run_button">Assemble & Run</button>
             <button id="reset_button">Reset</button>
 
             <button id="clock_button">Clock</button>
@@ -36,13 +36,13 @@
 
             <input type="checkbox" id="auto_clock_input"><label for="auto_clock_input">Auto clock</label>
 
-            <div style="float:right;line-height: 36px;margin-right: 16px;">
+            <div class="right-checkbox">
                 <input type="checkbox" id="dark_mode_input"><label for="dark_mode_input">Dark mode</label>
             </div>
         </div>
 
-        <div style="flex:1;display:flex">
-            <textarea id="assembly_input" style="flex:1;" spellcheck="false" autocomplete="off">    ; A simple test program
+        <div class="editors">
+            <textarea id="assembly_input" class="flex" spellcheck="false" autocomplete="off">    ; A simple test program
     add a, 1
     load b, a
     add b, 0x30
@@ -67,11 +67,11 @@
     store b, [a]
     halt</textarea>
 
-            <textarea id="binary_label" disabled style="flex:1"></textarea>
+            <textarea id="binary_label" class="flex" disabled></textarea>
 
-            <div style="flex:1;display:flex;flex-direction:column">
-                <div style="flex:2;display:flex;flex-direction:column">
-                    <div style="padding:0 4px;border:1px solid black">
+            <div class="right-column">
+                <div class="processor-state">
+                    <div class="processor-vars">
                         <p>
                             Halted: <code id="halted_label"></code> |
                             Step: <code id="step_label"></code> |
@@ -88,9 +88,9 @@
                             Zero flag: <code id="zero_flag_label"></code>
                         </p>
                     </div>
-                    <textarea id="memory_label" style="flex:1" disabled></textarea>
+                    <textarea id="memory_label" class="flex" disabled></textarea>
                 </div>
-                <textarea id="output_label" style="flex:1" disabled></textarea>
+                <textarea id="output_label" class="flex" disabled></textarea>
             </div>
         </div>
     </div>

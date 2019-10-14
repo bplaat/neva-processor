@@ -26,11 +26,6 @@ body {
     color: #111;
 }
 
-h1 {
-    margin: 0;
-    font-size: 32px;
-}
-
 p {
     margin: 4px 0;
 }
@@ -50,6 +45,66 @@ textarea:disabled {
     color: #333;
 }
 
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.flex {
+    flex: 1;
+}
+
+.header {
+    display: flex;
+}
+
+.header > h1 {
+    margin: 0 0 0 16px;
+    font-size: 32px;
+}
+
+.header-link {
+    margin-right: 16px;
+    line-height: 48px;
+}
+
+.toolbar {
+    border: 1px solid #111;
+}
+
+.button-seperation {
+    margin-right: 16px;
+}
+
+.right-checkbox {
+    float: right;
+    line-height: 36px;
+    margin-right: 16px;
+}
+
+.editors {
+    display: flex;
+    flex: 1;
+}
+
+.right-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.processor-state {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+}
+
+.processor-vars {
+    padding: 0 4px;
+    border: 1px solid #111;
+}
+
 .dark {
     background-color: #111;
     color: #fff;
@@ -65,9 +120,14 @@ textarea:disabled {
 
 .dark textarea {
     background-color: #111;
+    border-color: #444;
     color: #fff;
 }
 .dark textarea:disabled {
     background-color: #222;
     color: #fff;
+}
+
+.dark .toolbar, .dark .processor-vars {
+    border-color: #444;
 }
