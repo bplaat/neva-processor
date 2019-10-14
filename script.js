@@ -364,6 +364,34 @@ reset();
 
 if (localStorage.assembly != undefined) {
     assembly_input.value = localStorage.assembly;
+} else {
+    assembly_input.value = `    ; A simple test program
+
+    ; Count from 0 to 9
+    load b, a
+    add b, 0x30
+    store b, [0xff]
+    add a, 1
+    cmp a, 10
+    jne 0
+
+    ; Print newline
+    load a, 10
+    store a, [0xff]
+
+    ; Print HELLO
+    load a, 0xff
+    load b, 0x48
+    store b, [a]
+    load b, 0x41
+    store b, [a]
+    load b, 0x4c
+    store b, [a]
+    store b, [a]
+    load b, 0x4f
+    store b, [a]
+
+    halt`;
 }
 
 if (localStorage.dark_mode == 'true') {
