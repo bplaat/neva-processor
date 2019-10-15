@@ -30,6 +30,7 @@ opcode reg mode | null reg
 0 = A
 1 = B
 ip = instruction pointer
+sp = stack pointer
 carry flag, zero flag
 ```
 
@@ -73,7 +74,13 @@ There is room for 32 different instructions:
 19 = ja = if (!carry && !zero) ip = data
 20 = jna = if (carry && zero) ip = data
 
-21 / 30 = nothing
+-- Only available in JavaScript simulator
+21 = push = mem[sp--] = data
+22 = pop = reg = mem[++sp]
+23 = call = mem[sp--] = ip, ip = data
+24 = ret = ip = mem[++sp]
+
+25 / 30 = nothing
 
 31 = halt
 ```

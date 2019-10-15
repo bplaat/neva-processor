@@ -15,6 +15,11 @@ var opcodes = {
     'ja': 19, 'jnbe': 19,
     'jna': 20, 'jbe': 20,
 
+    'push': 21,
+    'pop': 22,
+    'call': 23,
+    'ret': 24,
+
     'halt': 31
 };
 
@@ -218,7 +223,7 @@ function assembler(data) {
 
 var mem = new Uint8ClampedArray(256), zero_memory,
     halted, step, instruction_byte, data_byte,
-    instruction_pointer, registers = new Uint8Array(2),
+    instruction_pointer, stack_pointer, registers = new Uint8Array(2),
     carry_flag, zero_flag, timeout, just_run = false,
     clock_freq = parseInt(clock_freq_input.value);
 
@@ -230,6 +235,7 @@ function update_labels() {
     instruction_pointer_label.textContent = format_byte(instruction_pointer);
     register_a_label.textContent = format_byte(registers[0]);
     register_b_label.textContent = format_byte(registers[1]);
+    stack_pointer_label.textContent = format_byte(stack_pointer);
     carry_flag_label.textContent = format_boolean(carry_flag);
     zero_flag_label.textContent = format_boolean(zero_flag);
 
@@ -249,6 +255,7 @@ function update_labels() {
 function reset () {
     halted = false;
     instruction_pointer = 0;
+    stack_pointer = 0xfe;
     step = 0;
     instruction_byte = 0;
     data_byte = 0;
@@ -273,9 +280,8 @@ function reset () {
 function clock_cycle () {
     if (halted) return;
 
-    if (instruction_pointer >= 255) {
-        instruction_pointer -= 255;
-    }
+    instruction_pointer &= 255;
+    stack_pointer &= 255;
 
     if (step == 0) {
         step++;
@@ -393,6 +399,20 @@ function clock_cycle () {
             instruction_pointer = data;
         }
 
+        if (opcode == opcodes.push) {
+            mem[stack_pointer--] = data;
+        }
+        if (opcode == opcodes.pop) {
+            registers[register] = mem[++stack_pointer];
+        }
+        if (opcode == opcodes.call) {
+            mem[stack_pointer--] = instruction_pointer;
+            instruction_pointer = data;
+        }
+        if (opcode == opcodes.ret) {
+            instruction_pointer = mem[++stack_pointer];
+        }
+
         if (opcode == opcodes.halt) {
             halted = true;
         }
@@ -473,30 +493,32 @@ reset();
 
 var examples = [
 `    ; A simple Hello World example
+    load b, 0
+loop:
     load a, message
-    load b, $ + 6
-    store b, [return_address]
-    jmp print_string
-
-    load a, message
-    load b, $ + 6
-    store b, [return_address]
-    jmp print_string
-
+    call print_string
+    add b, 1
+    cmp b, 5
+    je loop_done
+    jmp loop
+loop_done:
     halt
 
 print_string:
+    push b
+print_string_loop:
     load b, [a]
     cmp b, 0
-    je [return_address]
+    je print_string_done
     store b, [0xff]
     add a, 1
-    jmp print_string
+    jmp print_string_loop
+print_string_done:
+    pop b, 0
+    ret
 
 message:
     db 'Hello World!', 10, 0
-return_address:
-    db 0
 `,
 `    ; A simple counter program
     load a, 0
