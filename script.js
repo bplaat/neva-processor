@@ -49,7 +49,7 @@ function parse_param(param, line) {
         return { mode: 1, data: registers_names[param.toLowerCase()] };
     }
 
-    if (param.substring(0, 1) == '\'' && param.substring(0, 1) == '"') {
+    if (param.substring(0, 1) == '\'' || param.substring(0, 1) == '"') {
         return { mode: 0, data: param.charCodeAt(1) & 255 };
     }
 
@@ -73,7 +73,7 @@ function parse_param(param, line) {
             return { mode: 3, data: registers_names[param.toLowerCase()] };
         }
 
-        if (param.substring(0, 1) == '\'' && param.substring(0, 1) == '"') {
+        if (param.substring(0, 1) == '\'' || param.substring(0, 1) == '"') {
             return { mode: 2, data: param.charCodeAt(1) & 255 };
         }
 
@@ -499,8 +499,6 @@ return_address:
     db 0
 `,
 `    ; A simple counter program
-    jmp print_hello
-
     load a, 0
 print_loop:
     add a, 1
@@ -513,7 +511,6 @@ print_loop:
     load a, 2 * 5
     store a, [0x80 + 0x80 - 1]
 
-print_hello:
     load a, 0xff
     LOAD b, 'H'
     store b, [A]

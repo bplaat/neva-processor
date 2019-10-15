@@ -39,7 +39,7 @@ function parse_param(param, line) {
         return { mode: 1, data: registers_names[param.toLowerCase()] };
     }
 
-    if (param.substring(0, 1) == '\'' && param.substring(0, 1) == '"') {
+    if (param.substring(0, 1) == '\'' || param.substring(0, 1) == '"') {
         return { mode: 0, data: param.charCodeAt(1) & 255 };
     }
 
@@ -63,7 +63,7 @@ function parse_param(param, line) {
             return { mode: 3, data: registers_names[param.toLowerCase()] };
         }
 
-        if (param.substring(0, 1) == '\'' && param.substring(0, 1) == '"') {
+        if (param.substring(0, 1) == '\'' || param.substring(0, 1) == '"') {
             return { mode: 2, data: param.charCodeAt(1) & 255 };
         }
 
