@@ -49,7 +49,7 @@ function parse_param(param, line) {
         return { mode: 1, data: registers_names[param.toLowerCase()] };
     }
 
-    if (param.substring(0, 1) == '\'') {
+    if (param.substring(0, 1) == '\'' && param.substring(0, 1) == '"') {
         return { mode: 0, data: param.charCodeAt(1) & 255 };
     }
 
@@ -73,7 +73,7 @@ function parse_param(param, line) {
             return { mode: 3, data: registers_names[param.toLowerCase()] };
         }
 
-        if (param.substring(0, 1) == '\'') {
+        if (param.substring(0, 1) == '\'' && param.substring(0, 1) == '"') {
             return { mode: 2, data: param.charCodeAt(1) & 255 };
         }
 
@@ -127,6 +127,28 @@ function assembler(data) {
                     labels[label] = output.length;
                     binary_lines.push(label + ': ' + format_byte(output.length));
                 }
+            }
+
+            else if (opcode == 'db') {
+                for (var j = 0; j < parts.length; j++) {
+                    if (parts[j].substring(0, 1) == '\'' || parts[j].substring(0, 1) == '"') {
+                        parts[j] = parts[j].substring(1, parts[j].length - 1);
+                        for (var k = 0; k < parts[j].length; k++) {
+                            output.push(parts[j].charCodeAt(k) & 255);
+                        }
+                    }
+                    else if (!isNaN(parts[j])) {
+                        output.push(parseInt(parts[j]) & 255);
+                    }
+                    else {
+                        var calculation;
+                        try { calculation = eval(parts[j]); } catch (error) {}
+                        if (calculation != undefined) {
+                            output.push(Math.floor(calculation) & 255);
+                        }
+                    }
+                }
+                binary_lines.push('[ data ]');
             }
 
             else {
