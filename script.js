@@ -37,6 +37,30 @@ function format_boolean(boolean) {
     return boolean ? 't' : 'f';
 }
 
+function parse_param(param) {
+    if (!isNaN(param)) {
+        return { mode: 0, data: parseInt(param) };
+    }
+    if (param.substring(0, 1) == '\'') {
+        return { mode: 0, data: param.charCodeAt(1) };
+    }
+    if (registers_names[param.toLowerCase()] != undefined) {
+        return { mode: 1, data: registers_names[param.toLowerCase()] };
+    }
+    if (param.substring(0, 1) == '[') {
+        param = param.substring(1, param.length - 1);
+        if (!isNaN(param)) {
+            return { mode: 2, data: parseInt(param) };
+        }
+        if (param.substring(0, 1) == '\'') {
+            return { mode: 2, data: param.charCodeAt(1) };
+        }
+        if (registers_names[param.toLowerCase()] != undefined) {
+            return { mode: 3, data: registers_names[param.toLowerCase()] };
+        }
+    }
+}
+
 function assembler(data) {
     var output = [];
     var lines = data.split('\n');
@@ -51,53 +75,23 @@ function assembler(data) {
             var opcode = opcodes[parts[0].toLowerCase()] << 3;
 
             if (parts[1] == undefined && parts[2] == undefined) {
-                instruction.push(opcode);
-                instruction.push(0);
+                instruction[0] = opcode;
+                instruction[1] = 0;
             }
 
             if (parts[1] != undefined && parts[2] == undefined) {
-                if (!isNaN(parts[1])) {
-                    instruction.push(opcode);
-                    instruction.push(parseInt(parts[1]));
-                }
-                else if (registers_names[parts[1].toLowerCase()] != undefined) {
-                    instruction.push(opcode | 1);
-                    instruction.push(registers_names[parts[1].toLowerCase()]);
-                }
-                else if (parts[1].startsWith("[")) {
-                    var addr = parts[1].substring(1, parts[1].length - 1);
-                    if (registers_names[addr.toLowerCase()] == undefined) {
-                        instruction.push(opcode | 2);
-                        instruction.push(parseInt(addr));
-                    } else {
-                        instruction.push(opcode | 3);
-                        instruction.push(registers_names[addr.toLowerCase()]);
-                    }
-                }
+                var param = parse_param(parts[1]);
+                instruction[0] = opcode | param.mode;
+                instruction[1] = param.data;
             }
 
             if (parts[1] != undefined && parts[2] != undefined) {
                 var register = registers_names[parts[1].substring(0, parts[1].length - 1).toLowerCase()] << 2;
-
-                if (!isNaN(parts[2])) {
-                    instruction.push(opcode | register);
-                    instruction.push(parseInt(parts[2]));
-                }
-                else if (registers_names[parts[2].toLowerCase()] != undefined) {
-                    instruction.push(opcode | register | 1);
-                    instruction.push(registers_names[parts[2].toLowerCase()]);
-                }
-                else if (parts[2].startsWith("[")) {
-                    var addr = parts[2].substring(1, parts[2].length - 1);
-                    if (registers_names[addr.toLowerCase()] == undefined) {
-                        instruction.push(opcode | register | 2);
-                        instruction.push(parseInt(addr));
-                    } else {
-                        instruction.push(opcode | register | 3);
-                        instruction.push(registers_names[addr.toLowerCase()]);
-                    }
-                }
+                var param = parse_param(parts[2]);
+                instruction[0] = opcode | register | param.mode;
+                instruction[1] = param.data;
             }
+
             output.push(instruction[0], instruction[1]);
 
             binary_label.value += pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
@@ -366,31 +360,28 @@ if (localStorage.assembly != undefined) {
     assembly_input.value = localStorage.assembly;
 } else {
     assembly_input.value = `    ; A simple test program
-
-    ; Count from 0 to 9
-    load b, a
-    add b, 0x30
-    store b, [0xff]
     add a, 1
-    cmp a, 10
+    load b, a
+    add b, '0'
+    store b, [0xff]
+    cmp a, 9
     jne 0
 
-    ; Print newline
     load a, 10
     store a, [0xff]
 
-    ; Print HELLO
     load a, 0xff
-    load b, 0x48
+    LOAD b, 'H'
     store b, [a]
-    load b, 0x41
+    LOAD b, 'A'
     store b, [a]
-    load b, 0x4c
+    LOAD b, 'L'
     store b, [a]
     store b, [a]
-    load b, 0x4f
+    LOAD b, 'O'
     store b, [a]
-
+    LOAD b, '!'
+    store b, [a]
     halt`;
 }
 
