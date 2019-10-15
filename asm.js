@@ -104,10 +104,10 @@ for (var i = 0; i < lines.length; i++) {
     var line = lines[i].replace(/;.*/, '').trim();
     if (line != '') {
         var parts = line.split(',');
-        var opcode = parts[0].substring(0, parts[0].indexOf(' '));
+        var opcode_text = parts[0].substring(0, parts[0].indexOf(' ')).toLowerCase();
         parts[0] = parts[0].substring(parts[0].indexOf(' '));
-        if (opcode == '') {
-            opcode = parts[0];
+        if (opcode_text == '') {
+            opcode_text = parts[0].toLowerCase();
             parts = [];
         } else {
             for (var j = 0; j < parts.length; j++) {
@@ -115,14 +115,14 @@ for (var i = 0; i < lines.length; i++) {
             }
         }
 
-        if (opcode.substring(opcode.length - 1) == ':') {
-            var label = opcode.substring(0, opcode.length - 1);
+        if (opcode_text.substring(opcode_text.length - 1) == ':') {
+            var label = opcode_text.substring(0, opcode_text.length - 1);
             if (label_regexp.test(label)) {
                 labels[label] = output.length;
             }
         }
 
-        else if (opcode == 'db') {
+        else if (opcode_text == 'db') {
             for (var j = 0; j < parts.length; j++) {
                 if (parts[j].substring(0, 1) == '\'' || parts[j].substring(0, 1) == '"') {
                     parts[j] = parts[j].substring(1, parts[j].length - 1);
@@ -147,7 +147,7 @@ for (var i = 0; i < lines.length; i++) {
 
         else {
             var instruction = [];
-            opcode = opcodes[opcode.toLowerCase()] << 3;
+            var opcode = opcodes[opcode_text.toLowerCase()] << 3;
 
             if (parts[0] == undefined && parts[1] == undefined) {
                 instruction[0] = opcode;

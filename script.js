@@ -120,10 +120,10 @@ function assembler(data) {
         var line = lines[i].replace(/;.*/, '').trim();
         if (line != '') {
             var parts = line.split(',');
-            var opcode = parts[0].substring(0, parts[0].indexOf(' '));
+            var opcode_text = parts[0].substring(0, parts[0].indexOf(' ')).toLowerCase();
             parts[0] = parts[0].substring(parts[0].indexOf(' '));
-            if (opcode == '') {
-                opcode = parts[0];
+            if (opcode_text == '') {
+                opcode_text = parts[0].toLowerCase();
                 parts = [];
             } else {
                 for (var j = 0; j < parts.length; j++) {
@@ -131,15 +131,15 @@ function assembler(data) {
                 }
             }
 
-            if (opcode.substring(opcode.length - 1) == ':') {
-                var label = opcode.substring(0, opcode.length - 1);
+            if (opcode_text.substring(opcode_text.length - 1) == ':') {
+                var label = opcode_text.substring(0, opcode_text.length - 1);
                 if (label_regexp.test(label)) {
                     labels[label] = output.length;
                     binary_lines.push(label + ': ' + format_byte(output.length));
                 }
             }
 
-            else if (opcode == 'db') {
+            else if (opcode_text == 'db') {
                 for (var j = 0; j < parts.length; j++) {
                     if (parts[j].substring(0, 1) == '\'' || parts[j].substring(0, 1) == '"') {
                         parts[j] = parts[j].substring(1, parts[j].length - 1);
@@ -165,7 +165,7 @@ function assembler(data) {
 
             else {
                 var instruction = [];
-                opcode = opcodes[opcode.toLowerCase()] << 3;
+                var opcode = opcodes[opcode_text.toLowerCase()] << 3;
 
                 if (parts[0] == undefined && parts[1] == undefined) {
                     instruction[0] = opcode;
@@ -173,9 +173,15 @@ function assembler(data) {
                 }
 
                 if (parts[0] != undefined && parts[1] == undefined) {
-                    var param = parse_param(parts[0], i);
-                    instruction[0] = opcode | param.mode;
-                    instruction[1] = param.data;
+                    if (opcode_text == 'pop') {
+                        var register = registers_names[parts[0].toLowerCase()] << 2;
+                        instruction[0] = opcode | register | 1;
+                        instruction[1] = 0;
+                    } else {
+                        var param = parse_param(parts[0], i);
+                        instruction[0] = opcode | param.mode;
+                        instruction[1] = param.data;
+                    }
                 }
 
                 if (parts[0] != undefined && parts[1] != undefined) {
@@ -514,7 +520,7 @@ print_string_loop:
     add a, 1
     jmp print_string_loop
 print_string_done:
-    pop b, 0
+    pop b
     ret
 
 message:
