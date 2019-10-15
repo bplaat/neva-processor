@@ -39,10 +39,10 @@ function format_boolean(boolean) {
 
 function parse_param(param) {
     if (!isNaN(param)) {
-        return { mode: 0, data: parseInt(param) };
+        return { mode: 0, data: parseInt(param) & 255 };
     }
     if (param.substring(0, 1) == '\'') {
-        return { mode: 0, data: param.charCodeAt(1) };
+        return { mode: 0, data: param.charCodeAt(1) & 255 };
     }
     if (registers_names[param.toLowerCase()] != undefined) {
         return { mode: 1, data: registers_names[param.toLowerCase()] };
@@ -50,44 +50,65 @@ function parse_param(param) {
     if (param.substring(0, 1) == '[') {
         param = param.substring(1, param.length - 1);
         if (!isNaN(param)) {
-            return { mode: 2, data: parseInt(param) };
+            return { mode: 2, data: parseInt(param) & 255 };
         }
         if (param.substring(0, 1) == '\'') {
-            return { mode: 2, data: param.charCodeAt(1) };
+            return { mode: 2, data: param.charCodeAt(1) & 255 };
         }
         if (registers_names[param.toLowerCase()] != undefined) {
             return { mode: 3, data: registers_names[param.toLowerCase()] };
+        }
+        var calculation;
+        try { calculation = eval(param); } catch (error) {}
+        if (calculation != undefined) {
+            return { mode: 2, data: Math.floor(calculation) & 255 };
+        }
+    }
+    else {
+        var calculation;
+        try { calculation = eval(param); } catch (error) {}
+        if (calculation != undefined) {
+            return { mode: 0, data: Math.floor(calculation) & 255 };
         }
     }
 }
 
 function assembler(data) {
+    binary_label.value = '';
     var output = [];
     var lines = data.split('\n');
-
-    binary_label.value = '';
-
     for (var i = 0; i < lines.length; i++) {
-        var parts = lines[i].replace(/;.*/, '').trim().split(/\s+/);
-        if (parts[0] != '') {
+        var line = lines[i].replace(/;.*/, '').trim()
+        if (line != '') {
+            var parts = line.split(',');
+            var opcode = parts[0].substring(0, parts[0].indexOf(' '));
+            parts[0] = parts[0].substring(parts[0].indexOf(' '));
+            if (opcode == '') {
+                opcode = parts[0];
+                parts = [];
+            } else {
+                for (var j = 0; j < parts.length; j++) {
+                    parts[j] = parts[j].trim();
+                }
+            }
+
             var instruction = [];
+            opcode = opcodes[opcode.toLowerCase()] << 3;
 
-            var opcode = opcodes[parts[0].toLowerCase()] << 3;
-
-            if (parts[1] == undefined && parts[2] == undefined) {
+            if (parts[0] == undefined && parts[1] == undefined) {
                 instruction[0] = opcode;
                 instruction[1] = 0;
             }
 
-            if (parts[1] != undefined && parts[2] == undefined) {
-                var param = parse_param(parts[1]);
+            if (parts[0] != undefined && parts[1] == undefined) {
+                var param = parse_param(parts[0]);
                 instruction[0] = opcode | param.mode;
                 instruction[1] = param.data;
             }
 
-            if (parts[1] != undefined && parts[2] != undefined) {
-                var register = registers_names[parts[1].substring(0, parts[1].length - 1).toLowerCase()] << 2;
-                var param = parse_param(parts[2]);
+            if (parts[0] != undefined && parts[1] != undefined) {
+                var register = registers_names[parts[0].toLowerCase()] << 2;
+                var param = parse_param(parts[1]);
                 instruction[0] = opcode | register | param.mode;
                 instruction[1] = param.data;
             }

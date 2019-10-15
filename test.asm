@@ -6,8 +6,8 @@
     cmp a, 9
     jne 0
 
-    load a, 10
-    store a, [0xff]
+    load a, 2 * 5
+    store a, [0x80 + 0x80 - 1]
 
     load a, 0xff
     LOAD b, 'H'
