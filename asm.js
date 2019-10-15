@@ -77,17 +77,22 @@ function parse_param(param, line) {
         }
 
         var calculation;
-        try { calculation = eval(param); } catch (error) { }
+        try {
+            calculation = Function('$', '"use strict";return (' + param + ')')(output.length);
+        } catch (error) {}
         if (calculation != undefined) {
             return { mode: 2, data: Math.floor(calculation) & 255 };
         }
     } else {
         var calculation;
-        try { calculation = eval(param); } catch (error) { }
+        try {
+            calculation = Function('$', '"use strict";return (' + param + ')')(output.length);
+        } catch (error) {}
         if (calculation != undefined) {
             return { mode: 0, data: Math.floor(calculation) & 255 };
         }
     }
+    console.log('Error on line: ' + line);
 }
 
 output = [];
@@ -130,7 +135,9 @@ for (var i = 0; i < lines.length; i++) {
                 }
                 else {
                     var calculation;
-                    try { calculation = eval(parts[j]); } catch (error) {}
+                    try {
+                        calculation = Function('$', '"use strict";return (' + param + ')')(output.length);
+                    } catch (error) {}
                     if (calculation != undefined) {
                         output.push(Math.floor(calculation) & 255);
                     }

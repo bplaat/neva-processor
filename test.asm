@@ -1,15 +1,24 @@
     load a, message
+    load b, $ + 6
+    store b, [return_address]
+    jmp print_string
+
+    load a, message
+    load b, $ + 6
+    store b, [return_address]
+    jmp print_string
+
+    halt
 
 print_string:
     load b, [a]
     cmp b, 0
-    je print_string_done
+    je [return_address]
     store b, [0xff]
     add a, 1
     jmp print_string
 
-print_string_done:
-    halt
-
 message:
-    db "Hello Bastiaan!", 10, 0
+    db 'Hello World!', 10, 0
+return_address:
+    db 0

@@ -87,17 +87,22 @@ function parse_param(param, line) {
         }
 
         var calculation;
-        try { calculation = eval(param); } catch (error) {}
+        try {
+            calculation = Function('$', '"use strict";return (' + param + ')')(output.length);
+        } catch (error) {}
         if (calculation != undefined) {
             return { mode: 2, data: Math.floor(calculation) & 255 };
         }
     } else {
         var calculation;
-        try { calculation = eval(param); } catch (error) {}
+        try {
+            calculation = Function('$', '"use strict";return (' + param + ')')(output.length);
+        } catch (error) {}
         if (calculation != undefined) {
             return { mode: 0, data: Math.floor(calculation) & 255 };
         }
     }
+    alert('Error on line: ' + line);
 }
 
 function assembler(data) {
@@ -142,7 +147,9 @@ function assembler(data) {
                     }
                     else {
                         var calculation;
-                        try { calculation = eval(parts[j]); } catch (error) {}
+                        try {
+                            calculation = Function('$', '"use strict";return (' + param + ')')(output.length);
+                        } catch (error) {}
                         if (calculation != undefined) {
                             output.push(Math.floor(calculation) & 255);
                         }
@@ -464,10 +471,34 @@ auto_clock_input.onchange = function () {
 
 reset();
 
-if (localStorage.assembly != undefined) {
-    assembly_input.value = localStorage.assembly;
-} else {
-    assembly_input.value = `    ; A simple test program
+var examples = [
+`    ; A simple Hello World example
+    load a, message
+    load b, $ + 6
+    store b, [return_address]
+    jmp print_string
+
+    load a, message
+    load b, $ + 6
+    store b, [return_address]
+    jmp print_string
+
+    halt
+
+print_string:
+    load b, [a]
+    cmp b, 0
+    je [return_address]
+    store b, [0xff]
+    add a, 1
+    jmp print_string
+
+message:
+    db 'Hello World!', 10, 0
+return_address:
+    db 0
+`,
+`    ; A simple counter program
     jmp print_hello
 
     load a, 0
@@ -485,18 +516,31 @@ print_loop:
 print_hello:
     load a, 0xff
     LOAD b, 'H'
-    store b, [a]
+    store b, [A]
     LOAD b, 'A'
-    store b, [a]
+    store b, [A]
     LOAD b, 'L'
-    store b, [a]
-    store b, [a]
+    store b, [A]
+    store b, [A]
     LOAD b, 'O'
-    store b, [a]
+    store b, [A]
     LOAD b, '!'
-    store b, [a]
-    halt`;
+    store b, [A]
+    halt
+`
+];
+
+if (localStorage.assembly != undefined) {
+    assembly_input.value = localStorage.assembly;
+} else {
+    assembly_input.value = examples[0];
 }
+
+load_button.onclick = function () {
+    reset();
+    assembly_input.value = examples[example_input.value];
+    localStorage.assembly = assembly_input.value;
+};
 
 if (localStorage.dark_mode == 'true') {
     document.body.classList.add('dark');
