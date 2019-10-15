@@ -37,34 +37,61 @@ function format_boolean(boolean) {
     return boolean ? 't' : 'f';
 }
 
-function parse_param(param) {
+var label_regexp = /^[a-zA-Z_][a-zA-Z0-9_]*$/,
+    output, labels, future_labels;
+
+function parse_param(param, line) {
     if (!isNaN(param)) {
         return { mode: 0, data: parseInt(param) & 255 };
     }
-    if (param.substring(0, 1) == '\'') {
-        return { mode: 0, data: param.charCodeAt(1) & 255 };
-    }
+
     if (registers_names[param.toLowerCase()] != undefined) {
         return { mode: 1, data: registers_names[param.toLowerCase()] };
     }
+
+    if (param.substring(0, 1) == '\'') {
+        return { mode: 0, data: param.charCodeAt(1) & 255 };
+    }
+
+    if (label_regexp.test(param)) {
+        if (labels[param] != undefined) {
+            return { mode: 0, data: labels[param] };
+        } else {
+            future_labels.push({ label: param, line: line, position: output.length });
+            return { mode: 0, data: 0 };
+        }
+    }
+
     if (param.substring(0, 1) == '[') {
         param = param.substring(1, param.length - 1);
+
         if (!isNaN(param)) {
             return { mode: 2, data: parseInt(param) & 255 };
         }
-        if (param.substring(0, 1) == '\'') {
-            return { mode: 2, data: param.charCodeAt(1) & 255 };
-        }
+
         if (registers_names[param.toLowerCase()] != undefined) {
             return { mode: 3, data: registers_names[param.toLowerCase()] };
         }
+
+        if (param.substring(0, 1) == '\'') {
+            return { mode: 2, data: param.charCodeAt(1) & 255 };
+        }
+
+        if (label_regexp.test(param)) {
+            if (labels[param] != undefined) {
+                return { mode: 2, data: labels[param] };
+            } else {
+                future_labels.push({ label: param, line: line, position: output.length });
+                return { mode: 2, data: 0 };
+            }
+        }
+
         var calculation;
         try { calculation = eval(param); } catch (error) {}
         if (calculation != undefined) {
             return { mode: 2, data: Math.floor(calculation) & 255 };
         }
-    }
-    else {
+    } else {
         var calculation;
         try { calculation = eval(param); } catch (error) {}
         if (calculation != undefined) {
@@ -74,11 +101,13 @@ function parse_param(param) {
 }
 
 function assembler(data) {
-    binary_label.value = '';
-    var output = [];
+    output = [];
+    labels = {};
+    future_labels = [];
+    var binary_lines = [];
     var lines = data.split('\n');
     for (var i = 0; i < lines.length; i++) {
-        var line = lines[i].replace(/;.*/, '').trim()
+        var line = lines[i].replace(/;.*/, '').trim();
         if (line != '') {
             var parts = line.split(',');
             var opcode = parts[0].substring(0, parts[0].indexOf(' '));
@@ -92,37 +121,69 @@ function assembler(data) {
                 }
             }
 
-            var instruction = [];
-            opcode = opcodes[opcode.toLowerCase()] << 3;
-
-            if (parts[0] == undefined && parts[1] == undefined) {
-                instruction[0] = opcode;
-                instruction[1] = 0;
+            if (opcode.substring(opcode.length - 1) == ':') {
+                var label = opcode.substring(0, opcode.length - 1);
+                if (label_regexp.test(label)) {
+                    labels[label] = output.length;
+                    binary_lines.push(label + ': ' + format_byte(output.length));
+                }
             }
 
-            if (parts[0] != undefined && parts[1] == undefined) {
-                var param = parse_param(parts[0]);
-                instruction[0] = opcode | param.mode;
-                instruction[1] = param.data;
+            else {
+                var instruction = [];
+                opcode = opcodes[opcode.toLowerCase()] << 3;
+
+                if (parts[0] == undefined && parts[1] == undefined) {
+                    instruction[0] = opcode;
+                    instruction[1] = 0;
+                }
+
+                if (parts[0] != undefined && parts[1] == undefined) {
+                    var param = parse_param(parts[0], i);
+                    instruction[0] = opcode | param.mode;
+                    instruction[1] = param.data;
+                }
+
+                if (parts[0] != undefined && parts[1] != undefined) {
+                    var register = registers_names[parts[0].toLowerCase()] << 2;
+                    var param = parse_param(parts[1], i);
+                    instruction[0] = opcode | register | param.mode;
+                    instruction[1] = param.data;
+                }
+
+                output.push(instruction[0], instruction[1]);
+
+                binary_lines.push(
+                    pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
+                    ((instruction[0] >> 2) & 1).toString(2) + ' ' +
+                    pad_string((instruction[0] & 3).toString(2), 2, '0') + '  ' +
+                    pad_string(instruction[1].toString(2), 8, '0') + ' | ' +
+                    format_byte(instruction[0]) + ' ' + format_byte(instruction[1])
+                );
             }
-
-            if (parts[0] != undefined && parts[1] != undefined) {
-                var register = registers_names[parts[0].toLowerCase()] << 2;
-                var param = parse_param(parts[1]);
-                instruction[0] = opcode | register | param.mode;
-                instruction[1] = param.data;
-            }
-
-            output.push(instruction[0], instruction[1]);
-
-            binary_label.value += pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
-                ((instruction[0] >> 2) & 1).toString(2) + ' ' +
-                pad_string((instruction[0] & 3).toString(2), 2, '0') + '  ' +
-                pad_string(instruction[1].toString(2), 8, '0') + ' | ' +
-                format_byte(instruction[0]) + ' ' + format_byte(instruction[1]);
+        } else {
+            binary_lines.push('');
         }
-        binary_label.value += '\n';
     }
+
+    for (var i = 0; i < future_labels.length; i++) {
+        var pos = future_labels[i].position;
+        output[pos + 1] = labels[future_labels[i].label];
+        binary_lines[future_labels[i].line] =
+            pad_string((output[pos] >> 3).toString(2), 5, '0') + ' ' +
+            ((output[pos] >> 2) & 1).toString(2) + ' ' +
+            pad_string((output[pos] & 3).toString(2), 2, '0') + '  ' +
+            pad_string(output[pos + 1].toString(2), 8, '0') + ' | ' +
+            format_byte(output[pos]) + ' ' + format_byte(output[pos + 1]);
+    }
+
+    binary_label.value = '';
+    for (var i = 0; i < binary_lines.length; i++) {
+        binary_label.value += binary_lines[i];
+        if (i != binary_lines.length - 1) binary_label.value += '\n';
+    }
+    binary_label.scrollTop = assembly_input.scrollTop;
+
     return output;
 }
 
@@ -331,6 +392,10 @@ assembly_input.oninput = function () {
     localStorage.assembly = assembly_input.value;
 };
 
+assembly_input.onscroll = function () {
+    binary_label.scrollTop = assembly_input.scrollTop;
+};
+
 function reset_and_assemble () {
     reset();
     zero_memory = false;
@@ -381,16 +446,21 @@ if (localStorage.assembly != undefined) {
     assembly_input.value = localStorage.assembly;
 } else {
     assembly_input.value = `    ; A simple test program
+    jmp print_hello
+
+    load a, 0
+print_loop:
     add a, 1
     load b, a
     add b, '0'
     store b, [0xff]
     cmp a, 9
-    jne 0
+    jne print_loop
 
-    load a, 10
-    store a, [0xff]
+    load a, 2 * 5
+    store a, [0x80 + 0x80 - 1]
 
+print_hello:
     load a, 0xff
     LOAD b, 'H'
     store b, [a]
@@ -418,4 +488,10 @@ dark_mode_input.onchange = function () {
         document.body.classList.remove('dark');
     }
     localStorage.dark_mode = dark_mode_input.checked;
+};
+
+document.onkeydown = function (event) {
+    if (event.keyCode == 83 && (navigator.platform.match('Mac') ? event.metaKey : event.ctrlKey)) {
+        event.preventDefault();
+    }
 };

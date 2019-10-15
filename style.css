@@ -105,6 +105,10 @@ textarea:disabled {
     border: 1px solid #111;
 }
 
+.prevent-scrolling {
+    overflow: hidden;
+}
+
 .dark {
     background-color: #111;
     color: #fff;
