@@ -178,7 +178,15 @@ function assembler(data) {
                 }
 
                 if (parts[0] != undefined && parts[1] == undefined) {
-                    if (opcode_text == 'pop') {
+                    if (opcode_text == 'inc') {
+                        var register = registers_names[parts[0].toLowerCase()] << 2;
+                        instruction[0] = (opcodes.add << 3) | register;
+                        instruction[1] = 1;
+                    } else if (opcode_text == 'dec') {
+                        var register = registers_names[parts[0].toLowerCase()] << 2;
+                        instruction[0] = (opcodes.sub << 3) | register;
+                        instruction[1] = 1;
+                    } else if (opcode_text == 'pop') {
                         var register = registers_names[parts[0].toLowerCase()] << 2;
                         instruction[0] = opcode | register | 2;
                         instruction[1] = 0;
@@ -548,7 +556,7 @@ var examples = [
     load b, 0
 loop:
     call print_string
-    add b, 1
+    inc b
     cmp b, 5
     je loop_done
     jmp loop
@@ -563,7 +571,7 @@ print_string_loop:
     cmp b, 0
     je print_string_done
     store b, [0xff]
-    add a, 1
+    inc a
     jmp print_string_loop
 print_string_done:
     pop b
@@ -576,7 +584,7 @@ message:
 `    ; A simple counter program
     load a, 0
 print_loop:
-    add a, 1
+    inc a
     load b, a
     add b, '0'
     store b, [0xff]
@@ -618,15 +626,15 @@ draw:
 
     cmp a, 6
     je draw_done
-    add a, 1
+    inc a
     jmp draw
 draw_done:
     halt
 
 x:
-    db 100
+    db 50
 y:
-    db 100
+    db 50
 `
 ];
 

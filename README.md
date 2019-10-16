@@ -85,6 +85,10 @@ There is room for 32 different instructions:
 25 / 30 = nothing
 
 31 = halt
+
+-- pseudo instructions
+inc reg = add reg, 1
+dec reg = sub reg, 1
 ```
 
 ## Memory I/O interface

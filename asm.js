@@ -165,7 +165,15 @@ for (var i = 0; i < lines.length; i++) {
             }
 
             if (parts[0] != undefined && parts[1] == undefined) {
-                if (opcode_text == 'pop') {
+                if (opcode_text == 'inc') {
+                    var register = registers_names[parts[0].toLowerCase()] << 2;
+                    instruction[0] = (opcodes.add << 3) | register;
+                    instruction[1] = 1;
+                } else if (opcode_text == 'dec') {
+                    var register = registers_names[parts[0].toLowerCase()] << 2;
+                    instruction[0] = (opcodes.sub << 3) | register;
+                    instruction[1] = 1;
+                } else if (opcode_text == 'pop') {
                     var register = registers_names[parts[0].toLowerCase()] << 2;
                     instruction[0] = opcode | register | 2;
                     instruction[1] = 0;
