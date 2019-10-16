@@ -236,7 +236,8 @@ var mem = new Uint8ClampedArray(256), zero_memory,
     halted, step, instruction_byte, data_byte,
     instruction_pointer, stack_pointer, registers = new Uint8Array(2),
     carry_flag, zero_flag, timeout, just_run = false,
-    clock_freq = parseInt(clock_freq_input.value);
+    clock_freq = parseInt(clock_freq_input.value),
+    context = canvas.getContext('2d');
 
 function update_labels() {
     halted_label.textContent = format_boolean(halted);
@@ -266,7 +267,7 @@ function update_labels() {
 function reset () {
     halted = false;
     instruction_pointer = 0;
-    stack_pointer = 0xfe;
+    stack_pointer = 0xfb;
     step = 0;
     instruction_byte = 0;
     data_byte = 0;
@@ -284,6 +285,8 @@ function reset () {
     auto_clock_input.checked = false;
     binary_label.value = '';
     output_label.value = '';
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.beginPath();
 
     update_labels();
 }
@@ -326,12 +329,30 @@ function clock_cycle () {
         if (opcode == opcodes.store) {
             if (mode == 2) {
                 mem[data_byte] = registers[register];
+                if (data_byte == 0xfe) {
+                    if (registers[register] == 0) {
+                        context.moveTo(mem[0xfc], mem[0xfd]);
+                    }
+                    if (registers[register] == 1) {
+                        context.lineTo(mem[0xfc], mem[0xfd]);
+                        context.stroke();
+                    }
+                }
                 if (data_byte == 0xff) {
                     output_label.value += String.fromCharCode(registers[register]);
                 }
             }
             if (mode == 3) {
                 mem[registers[data_byte]] = registers[register];
+                if (registers[data_byte] == 0xfe) {
+                    if (registers[register] == 0) {
+                        context.moveTo(mem[0xfc], mem[0xfd]);
+                    }
+                    if (registers[register] == 1) {
+                        context.lineTo(mem[0xfc], mem[0xfd]);
+                        context.stroke();
+                    }
+                }
                 if (registers[data_byte] == 0xff) {
                     output_label.value += String.fromCharCode(registers[register]);
                 }

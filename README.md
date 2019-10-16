@@ -87,6 +87,21 @@ There is room for 32 different instructions:
 31 = halt
 ```
 
+## Memory I/O interface
+If you write to some special memory locations you can communicate with some io devices
+
+```
+
+0xff = Write an ASCII character to the terminal display
+
+-- Only in the JavaScript simulator
+0xfc = x position
+0xfd = y position
+0xfe = 0 = move the pen to this position
+       1 = line the pen to this position
+
+```
+
 ## Online simulator and assembler
 There is an online processor simulator and assembler available at [neva-processor.ml](https://neva-processor.ml/)
 
