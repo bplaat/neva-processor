@@ -2,7 +2,7 @@
 A simple educational 8-bit processor with assembler
 
 ## Design
-The file `design.circ` is a [Logism](http://www.cburch.com/logisim/) circuit wich contains the complete processor:
+The file `design.circ` is a [Logism](http://www.cburch.com/logisim/) circuit which contains the complete processor:
 
 ![Logisim Design](design.png)
 
@@ -85,10 +85,23 @@ There is room for 32 different instructions:
 25 / 30 = nothing
 
 31 = halt
+```
 
--- pseudo instructions
+There are also some pseudo instructions which translates to other instructions:
+```
 inc reg = add reg, 1
 dec reg = sub reg, 1
+
+jb data = jc data
+jnae data = jc data
+jnb data = jnc data
+jae data = jnc data
+
+je data = jz data
+jne data = jnz data
+
+jnbe data = ja data
+jbe data = jna data
 ```
 
 ## Memory I/O interface
