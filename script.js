@@ -330,7 +330,7 @@ function reset () {
 function clock_cycle (auto_clock) {
     if (halted) return;
 
-    if (clock_count == 30000000 && unending_loop_input.checked) {
+    if (clock_count == 90000 && unending_loop_input.checked) {
         alert('Unending loop detected!');
         halted = true;
     } else {
@@ -379,6 +379,9 @@ function clock_cycle (auto_clock) {
                     if (registers[register] == 1) {
                         points.push({ type: 1, x: mem[0xfc], y: mem[0xfd] });
                     }
+                    if (registers[register] == 2) {
+                        points = [];
+                    }
                 }
                 if (data_byte == 0xff) {
                     output_label.value += String.fromCharCode(registers[register]);
@@ -392,6 +395,9 @@ function clock_cycle (auto_clock) {
                     }
                     if (registers[register] == 1) {
                         points.push({ type: 1, x: mem[0xfc], y: mem[0xfd] });
+                    }
+                    if (registers[register] == 2) {
+                        points = [];
                     }
                 }
                 if (registers[data_byte] == 0xff) {

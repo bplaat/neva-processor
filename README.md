@@ -119,6 +119,7 @@ If you write to some special memory locations you can communicate with some I/O 
 0xfd = y position
 0xfe = 0 = move the pen to this position
        1 = line the pen to this position
+       2 = clear the screen
 
 ```
 
