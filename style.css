@@ -69,7 +69,7 @@ textarea:disabled {
     line-height: 48px;
 }
 
-.toolbar, canvas {
+.toolbar, #canvas {
     border: 1px solid #111;
 }
 
@@ -132,6 +132,10 @@ textarea:disabled {
     color: #fff;
 }
 
-.dark .toolbar, .dark .processor-vars {
+.dark #output_label {
+    color: #0f0;
+}
+
+.dark .toolbar, .dark #canvas, .dark .processor-vars {
     border-color: #444;
 }

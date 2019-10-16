@@ -32,7 +32,7 @@ opcode reg mode | null reg
 0 = A = 0
 1 = B = 0
 ip = instruction pointer = 0
-sp = stack pointer = 0xfe
+sp = stack pointer = 0xfe or 0xfb
 carry flag = 0
 zero flag = 0
 ```

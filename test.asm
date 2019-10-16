@@ -1,7 +1,7 @@
     ; A simple Hello World example
+    load a, message
     load b, 0
 loop:
-    load a, message
     call print_string
     add b, 1
     cmp b, 5
@@ -11,6 +11,7 @@ loop_done:
     halt
 
 print_string:
+    push a
     push b
 print_string_loop:
     load b, [a]
@@ -21,6 +22,7 @@ print_string_loop:
     jmp print_string_loop
 print_string_done:
     pop b
+    pop a
     ret
 
 message:

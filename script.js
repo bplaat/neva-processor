@@ -237,7 +237,7 @@ var mem = new Uint8ClampedArray(256), zero_memory,
     instruction_pointer, stack_pointer, registers = new Uint8Array(2),
     carry_flag, zero_flag, timeout, just_run = false,
     clock_freq = parseInt(clock_freq_input.value),
-    context = canvas.getContext('2d');
+    context = canvas.getContext('2d'), points;
 
 function update_labels() {
     halted_label.textContent = format_boolean(halted);
@@ -262,6 +262,20 @@ function update_labels() {
             count++;
         }
     }
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.beginPath();
+    for (var i = 0; i < points.length; i++) {
+        if (points[i].type == 0) {
+            context.moveTo(points[i].x, points[i].y);
+        }
+        if (points[i].type == 1) {
+            context.lineTo(points[i].x, points[i].y);
+        }
+    }
+    context.strokeStyle = localStorage.dark_mode == 'true' ? '#0f0' : '#111';
+    context.stroke();
+    context.closePath();
 }
 
 function reset () {
@@ -285,8 +299,7 @@ function reset () {
     auto_clock_input.checked = false;
     binary_label.value = '';
     output_label.value = '';
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.beginPath();
+    points = [];
 
     update_labels();
 }
@@ -331,11 +344,10 @@ function clock_cycle () {
                 mem[data_byte] = registers[register];
                 if (data_byte == 0xfe) {
                     if (registers[register] == 0) {
-                        context.moveTo(mem[0xfc], mem[0xfd]);
+                        points.push({ type: 0, x: mem[0xfc], y: mem[0xfd] });
                     }
                     if (registers[register] == 1) {
-                        context.lineTo(mem[0xfc], mem[0xfd]);
-                        context.stroke();
+                        points.push({ type: 1, x: mem[0xfc], y: mem[0xfd] });
                     }
                 }
                 if (data_byte == 0xff) {
@@ -346,11 +358,10 @@ function clock_cycle () {
                 mem[registers[data_byte]] = registers[register];
                 if (registers[data_byte] == 0xfe) {
                     if (registers[register] == 0) {
-                        context.moveTo(mem[0xfc], mem[0xfd]);
+                        points.push({ type: 0, x: mem[0xfc], y: mem[0xfd] });
                     }
                     if (registers[register] == 1) {
-                        context.lineTo(mem[0xfc], mem[0xfd]);
-                        context.stroke();
+                        points.push({ type: 1, x: mem[0xfc], y: mem[0xfd] });
                     }
                 }
                 if (registers[data_byte] == 0xff) {
@@ -533,9 +544,9 @@ reset();
 
 var examples = [
 `    ; A simple Hello World example
+    load a, message
     load b, 0
 loop:
-    load a, message
     call print_string
     add b, 1
     cmp b, 5
@@ -545,6 +556,7 @@ loop_done:
     halt
 
 print_string:
+    push a
     push b
 print_string_loop:
     load b, [a]
@@ -555,6 +567,7 @@ print_string_loop:
     jmp print_string_loop
 print_string_done:
     pop b
+    pop a
     ret
 
 message:
@@ -588,12 +601,6 @@ print_loop:
     halt
 `,
 `    ; A cool graphics example
-    load a, 100
-    store a, [0xfc]
-    store a, [0xfd]
-    load a, 0
-    store a, [0xfe]
-
     load a, 0
 draw:
     load b, [x]
@@ -610,10 +617,10 @@ draw:
     store b, [0xfe]
 
     cmp a, 6
-    je stop
+    je draw_done
     add a, 1
     jmp draw
-stop:
+draw_done:
     halt
 
 x:
@@ -647,6 +654,7 @@ dark_mode_input.onchange = function () {
         document.body.classList.remove('dark');
     }
     localStorage.dark_mode = dark_mode_input.checked;
+    update_labels();
 };
 
 document.onkeydown = function (event) {
