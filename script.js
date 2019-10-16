@@ -586,6 +586,40 @@ print_loop:
     LOAD b, '!'
     store b, [A]
     halt
+`,
+`    ; A cool graphics example
+    load a, 100
+    store a, [0xfc]
+    store a, [0xfd]
+    load a, 0
+    store a, [0xfe]
+
+    load a, 0
+draw:
+    load b, [x]
+    store b, [0xfc]
+    add b, [y]
+    store b, [x]
+
+    load b, [y]
+    store b, [0xfd]
+    sub b, [x]
+    store b, [y]
+
+    load b, 1
+    store b, [0xfe]
+
+    cmp a, 6
+    je stop
+    add a, 1
+    jmp draw
+stop:
+    halt
+
+x:
+    db 100
+y:
+    db 100
 `
 ];
 

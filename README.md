@@ -88,7 +88,7 @@ There is room for 32 different instructions:
 ```
 
 ## Memory I/O interface
-If you write to some special memory locations you can communicate with some io devices
+If you write to some special memory locations you can communicate with some I/O devices:
 
 ```
 
