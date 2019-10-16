@@ -1,7 +1,7 @@
 var opcodes = {
     'nop': 0,
 
-    'load': 1, 'store': 2,
+    'load': 1, 'mov': 1, 'store': 2,
 
     'add': 3, 'adc': 4, 'sub': 5, 'sbb': 6, 'cmp': 7,
 
@@ -205,10 +205,17 @@ function assembler(data) {
                 }
 
                 if (parts[0] != undefined && parts[1] != undefined) {
-                    var register = registers_names[parts[0].toLowerCase()] << 2;
-                    var param = parse_param(parts[1], i);
-                    instruction[0] = opcode | register | param.mode;
-                    instruction[1] = param.data;
+                    if (opcode_text == 'mov' && parts[0].substring(0, 1) == '[') {
+                        var param = parse_param(parts[0], i);
+                        var register = registers_names[parts[1].toLowerCase()] << 2;
+                        instruction[0] = (opcodes.store << 3) | register | param.mode;
+                        instruction[1] = param.data;
+                    } else {
+                        var register = registers_names[parts[0].toLowerCase()] << 2;
+                        var param = parse_param(parts[1], i);
+                        instruction[0] = opcode | register | param.mode;
+                        instruction[1] = param.data;
+                    }
                 }
 
                 output.push(instruction[0], instruction[1]);
@@ -559,8 +566,8 @@ reset();
 
 var examples = [
 `    ; A simple Hello World example
-    load a, message
-    load b, 0
+    mov a, message
+    mov b, 0
 loop:
     call print_string
     inc b
@@ -574,10 +581,10 @@ print_string:
     push a
     push b
 print_string_loop:
-    load b, [a]
+    mov b, [a]
     cmp b, 0
     je print_string_done
-    store b, [0xff]
+    mov [0xff], b
     inc a
     jmp print_string_loop
 print_string_done:
@@ -616,20 +623,20 @@ print_loop:
     halt
 `,
 `    ; A cool graphics example
-    load a, 0
+    mov a, 0
 draw:
-    load b, [x]
-    store b, [0xfc]
+    mov b, [x]
+    mov [0xfc], b
     add b, [y]
-    store b, [x]
+    mov [x], b
 
-    load b, [y]
-    store b, [0xfd]
+    mov b, [y]
+    mov [0xfd], b
     sub b, [x]
-    store b, [y]
+    mov [y], b
 
-    load b, 1
-    store b, [0xfe]
+    mov b, 1
+    mov [0xfe], b
 
     cmp a, 6
     je draw_done

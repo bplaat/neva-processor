@@ -1,6 +1,6 @@
     ; A simple Hello World example
-    load a, message
-    load b, 0
+    mov a, message
+    mov b, 0
 loop:
     call print_string
     inc b
@@ -14,10 +14,10 @@ print_string:
     push a
     push b
 print_string_loop:
-    load b, [a]
+    mov b, [a]
     cmp b, 0
     je print_string_done
-    store b, [0xff]
+    mov [0xff], b
     inc a
     jmp print_string_loop
 print_string_done:

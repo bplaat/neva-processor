@@ -89,6 +89,9 @@ There is room for 32 different instructions:
 
 There are also some pseudo instructions which translates to other instructions:
 ```
+mov reg, data = load reg, data
+mov [data], reg = store reg, [data]
+
 inc reg = add reg, 1
 dec reg = sub reg, 1
 
