@@ -19,6 +19,11 @@ var opcodes = {
     'ja': 19, 'jnbe': 19,
     'jna': 20, 'jbe': 20,
 
+    'push': 21,
+    'pop': 22,
+    'call': 23,
+    'ret': 24,
+
     'halt': 31
 };
 
@@ -150,14 +155,25 @@ for (var i = 0; i < lines.length; i++) {
             var opcode = opcodes[opcode_text.toLowerCase()] << 3;
 
             if (parts[0] == undefined && parts[1] == undefined) {
-                instruction[0] = opcode;
-                instruction[1] = 0;
+                if (opcode_text == 'ret') {
+                    instruction[0] = opcode | 2;
+                    instruction[1] = 0;
+                } else {
+                    instruction[0] = opcode;
+                    instruction[1] = 0;
+                }
             }
 
             if (parts[0] != undefined && parts[1] == undefined) {
-                var param = parse_param(parts[0], i);
-                instruction[0] = opcode | param.mode;
-                instruction[1] = param.data;
+                if (opcode_text == 'pop') {
+                    var register = registers_names[parts[0].toLowerCase()] << 2;
+                    instruction[0] = opcode | register | 2;
+                    instruction[1] = 0;
+                } else {
+                    var param = parse_param(parts[0], i);
+                    instruction[0] = opcode | param.mode;
+                    instruction[1] = param.data;
+                }
             }
 
             if (parts[0] != undefined && parts[1] != undefined) {

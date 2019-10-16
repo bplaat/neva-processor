@@ -27,11 +27,12 @@ opcode reg mode | null reg
 
 ## Registers
 ```
-0 = A
-1 = B
-ip = instruction pointer
-sp = stack pointer
-carry flag, zero flag
+0 = A = 0
+1 = B = 0
+ip = instruction pointer = 0
+sp = stack pointer = 0xfe
+carry flag = 0
+zero flag = 0
 ```
 
 ## Modes
@@ -49,7 +50,7 @@ There is room for 32 different instructions:
 0 = nop
 
 1 = load = reg = data
-2 = store = mem[data (must be in addressing mode)] = reg
+2 = store (mode = 2 or mode = 3) = mem[data] = reg
 
 -- effects carray flag and zero flag
 3 = add = reg += data
@@ -74,11 +75,10 @@ There is room for 32 different instructions:
 19 = ja = if (!carry && !zero) ip = data
 20 = jna = if (carry && zero) ip = data
 
--- Only available in JavaScript simulator
-21 = push = mem[sp--] = data
-22 = pop = reg = mem[++sp]
-23 = call = mem[sp--] = ip, ip = data
-24 = ret = ip = mem[++sp]
+21 = push (mode = 0 or mode = 1) = mem[sp--] = data
+22 = pop (mode = 2) = reg = mem[++sp]
+23 = call (mode = 0 or mode = 1) = mem[sp--] = ip, ip = data
+24 = ret (mode = 2) = ip = mem[++sp]
 
 25 / 30 = nothing
 

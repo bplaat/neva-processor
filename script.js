@@ -168,14 +168,19 @@ function assembler(data) {
                 var opcode = opcodes[opcode_text.toLowerCase()] << 3;
 
                 if (parts[0] == undefined && parts[1] == undefined) {
-                    instruction[0] = opcode;
-                    instruction[1] = 0;
+                    if (opcode_text == 'ret') {
+                        instruction[0] = opcode | 2;
+                        instruction[1] = 0;
+                    } else {
+                        instruction[0] = opcode;
+                        instruction[1] = 0;
+                    }
                 }
 
                 if (parts[0] != undefined && parts[1] == undefined) {
                     if (opcode_text == 'pop') {
                         var register = registers_names[parts[0].toLowerCase()] << 2;
-                        instruction[0] = opcode | register | 1;
+                        instruction[0] = opcode | register | 2;
                         instruction[1] = 0;
                     } else {
                         var param = parse_param(parts[0], i);
@@ -406,17 +411,25 @@ function clock_cycle () {
         }
 
         if (opcode == opcodes.push) {
-            mem[stack_pointer--] = data;
+            if (mode == 0 || mode == 1) {
+                mem[stack_pointer--] = data;
+            }
         }
         if (opcode == opcodes.pop) {
-            registers[register] = mem[++stack_pointer];
+            if (mode == 2) {
+                registers[register] = mem[++stack_pointer];
+            }
         }
         if (opcode == opcodes.call) {
-            mem[stack_pointer--] = instruction_pointer;
-            instruction_pointer = data;
+            if (mode == 0 || mode == 1) {
+                mem[stack_pointer--] = instruction_pointer;
+                instruction_pointer = data;
+            }
         }
         if (opcode == opcodes.ret) {
-            instruction_pointer = mem[++stack_pointer];
+            if (mode == 2) {
+                instruction_pointer = mem[++stack_pointer];
+            }
         }
 
         if (opcode == opcodes.halt) {
