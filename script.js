@@ -140,15 +140,20 @@ function assembler(data) {
             }
 
             else if (opcode_text == 'db') {
+                var bytes = [];
                 for (var j = 0; j < parts.length; j++) {
                     if (parts[j].substring(0, 1) == '\'' || parts[j].substring(0, 1) == '"') {
                         parts[j] = parts[j].substring(1, parts[j].length - 1);
                         for (var k = 0; k < parts[j].length; k++) {
-                            output.push(parts[j].charCodeAt(k) & 255);
+                            var c = parts[j].charCodeAt(k) & 255;
+                            output.push(c);
+                            bytes.push(format_byte(c));
                         }
                     }
                     else if (!isNaN(parts[j])) {
-                        output.push(parseInt(parts[j]) & 255);
+                        var c = parseInt(parts[j]) & 255;
+                        output.push(c);
+                        bytes.push(format_byte(c));
                     }
                     else {
                         var calculation;
@@ -156,11 +161,13 @@ function assembler(data) {
                             calculation = Function('$', '"use strict";return (' + param + ')')(output.length);
                         } catch (error) {}
                         if (calculation != undefined) {
-                            output.push(Math.floor(calculation) & 255);
+                            var c = Math.floor(calculation) & 255;
+                            output.push(c);
+                            bytes.push(format_byte(c));
                         }
                     }
                 }
-                binary_lines.push('[ data ]');
+                binary_lines.push('    db ' + bytes.join(' '));
             }
 
             else {
@@ -207,7 +214,7 @@ function assembler(data) {
                 output.push(instruction[0], instruction[1]);
 
                 binary_lines.push(
-                    pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
+                    '    ' + pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
                     ((instruction[0] >> 2) & 1).toString(2) + ' ' +
                     pad_string((instruction[0] & 3).toString(2), 2, '0') + '  ' +
                     pad_string(instruction[1].toString(2), 8, '0') + ' | ' +
@@ -223,7 +230,7 @@ function assembler(data) {
         var pos = future_labels[i].position;
         output[pos + 1] = labels[future_labels[i].label];
         binary_lines[future_labels[i].line] =
-            pad_string((output[pos] >> 3).toString(2), 5, '0') + ' ' +
+            '    ' + pad_string((output[pos] >> 3).toString(2), 5, '0') + ' ' +
             ((output[pos] >> 2) & 1).toString(2) + ' ' +
             pad_string((output[pos] & 3).toString(2), 2, '0') + '  ' +
             pad_string(output[pos + 1].toString(2), 8, '0') + ' | ' +

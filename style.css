@@ -106,6 +106,7 @@ textarea:disabled {
 }
 
 .prevent-scrolling {
+    white-space: pre;
     overflow: hidden;
 }
 

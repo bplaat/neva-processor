@@ -3,7 +3,7 @@
     load b, 0
 loop:
     call print_string
-    add b, 1
+    inc b
     cmp b, 5
     je loop_done
     jmp loop
@@ -18,7 +18,7 @@ print_string_loop:
     cmp b, 0
     je print_string_done
     store b, [0xff]
-    add a, 1
+    inc a
     jmp print_string_loop
 print_string_done:
     pop b
