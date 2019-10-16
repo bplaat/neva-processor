@@ -255,7 +255,7 @@ function assembler(data) {
 }
 
 var mem = new Uint8ClampedArray(256), zero_memory,
-    halted, step, instruction_byte, data_byte,
+    clock_count, halted, step, instruction_byte, data_byte,
     instruction_pointer, stack_pointer, registers = new Uint8Array(2),
     carry_flag, zero_flag, timeout,
     clock_freq = parseInt(clock_freq_input.value),
@@ -301,6 +301,7 @@ function update_labels() {
 }
 
 function reset () {
+    clock_count = 0;
     halted = false;
     instruction_pointer = 0;
     stack_pointer = 0xfb;
@@ -328,6 +329,13 @@ function reset () {
 
 function clock_cycle (auto_clock) {
     if (halted) return;
+
+    if (clock_count == 30000000 && unending_loop_input.checked) {
+        alert('Unending loop detected!');
+        halted = true;
+    } else {
+        clock_count++;
+    }
 
     instruction_pointer &= 255;
     stack_pointer &= 255;
@@ -663,10 +671,11 @@ if (localStorage.assembly != undefined) {
     assembly_input.value = examples[0];
 }
 
-load_button.onclick = function () {
+example_input.onchange = function () {
     reset();
     assembly_input.value = examples[example_input.value];
     localStorage.assembly = assembly_input.value;
+    example_input.value = '';
 };
 
 if (localStorage.dark_mode == 'true') {
@@ -682,6 +691,14 @@ dark_mode_input.onchange = function () {
     }
     localStorage.dark_mode = dark_mode_input.checked;
     update_labels();
+};
+
+if (localStorage.unending_loop == 'false') {
+    unending_loop_input.checked = false;
+}
+
+unending_loop_input.onchange = function () {
+    localStorage.unending_loop = unending_loop_input.checked;
 };
 
 document.onkeydown = function (event) {
