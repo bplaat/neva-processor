@@ -2,7 +2,9 @@
 A simple educational 8-bit processor with assembler
 
 ## Design
-The file `design.circ` is a [Logism](http://www.cburch.com/logisim/) circuit wich contains the complete processor
+The file `design.circ` is a [Logism](http://www.cburch.com/logisim/) circuit wich contains the complete processor:
+
+![Logisim Design](design.png)
 
 ## Inspiration
 - https://en.wikipedia.org/wiki/MOS_Technology_6502
