@@ -384,7 +384,7 @@ function clock_cycle (auto_clock) {
                     }
                 }
                 if (data_byte == 0xff) {
-                    output_label.value += String.fromCharCode(registers[register]);
+                    output_label.value += String.fromCharCode(registers[register] & 127);
                 }
             }
             if (mode == 3) {
@@ -401,7 +401,7 @@ function clock_cycle (auto_clock) {
                     }
                 }
                 if (registers[data_byte] == 0xff) {
-                    output_label.value += String.fromCharCode(registers[register]);
+                    output_label.value += String.fromCharCode(registers[register] & 127);
                 }
             }
         }
