@@ -257,7 +257,7 @@ function assembler(data) {
 var mem = new Uint8ClampedArray(256), zero_memory,
     halted, step, instruction_byte, data_byte,
     instruction_pointer, stack_pointer, registers = new Uint8Array(2),
-    carry_flag, zero_flag, timeout, just_run = false,
+    carry_flag, zero_flag, timeout,
     clock_freq = parseInt(clock_freq_input.value),
     context = canvas.getContext('2d'), points;
 
@@ -326,7 +326,7 @@ function reset () {
     update_labels();
 }
 
-function clock_cycle () {
+function clock_cycle (auto_clock) {
     if (halted) return;
 
     instruction_pointer &= 255;
@@ -491,10 +491,16 @@ function clock_cycle () {
         }
     }
 
-    if (!just_run) update_labels();
-
-    if (auto_clock_input.checked) {
-        timeout = setTimeout(clock_cycle, 1000 / clock_freq);
+    if (auto_clock && auto_clock_input.checked) {
+        var time = 1000 / clock_freq;
+        while (time < 20) {
+            clock_cycle(false);
+            time += 1000 / clock_freq;
+        }
+        update_labels();
+        timeout = setTimeout(function () {
+            clock_cycle(true);
+        }, 1000 / clock_freq);
     }
 }
 
@@ -532,12 +538,10 @@ assemble_button.onclick = reset_and_assemble;
 
 function run_program() {
     if (!zero_memory) {
-        just_run = true;
         while (!halted) {
-            clock_cycle();
+            clock_cycle(false);
         }
         update_labels();
-        just_run = false;
     }
 }
 
@@ -551,7 +555,8 @@ assemble_and_run_button.onclick = function () {
 reset_button.onclick = reset;
 
 clock_button.onclick = function () {
-    clock_cycle();
+    clock_cycle(false);
+    update_labels();
 };
 
 clock_freq_input.onchange = function () {
@@ -559,7 +564,7 @@ clock_freq_input.onchange = function () {
 };
 
 auto_clock_input.onchange = function () {
-    clock_cycle();
+    clock_cycle(true);
 };
 
 reset();
