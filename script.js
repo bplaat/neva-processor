@@ -543,13 +543,14 @@ function clock_cycle (auto_clock) {
 
 assembly_input.onkeydown = function (event) {
     if (event.keyCode === 9) {
+        event.preventDefault();
         var start = this.selectionStart;
         var end = this.selectionEnd;
         var target = event.target;
         var value = target.value;
         target.value = value.substring(0, start) + '    ' + value.substring(end);
         this.selectionStart = this.selectionEnd = start + 4;
-        event.preventDefault();
+        localStorage.assembly = assembly_input.value;
     }
 };
 
