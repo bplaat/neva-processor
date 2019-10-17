@@ -578,6 +578,7 @@ function reset_and_assemble () {
         mem[i] = output[i];
     }
     update_labels();
+    return output;
 }
 
 assemble_button.onclick = reset_and_assemble;
@@ -599,7 +600,7 @@ assemble_and_run_button.onclick = function () {
 };
 
 download_bin_button.onclick = function () {
-    var output = assembler(assembly_input.value);
+    var output = reset_and_assemble();
 
     var file_dump = 'v2.0 raw\n';
     for (var i = 0; i < output.length; i++) {
