@@ -25,5 +25,4 @@ print_string_done:
     pop a
     ret
 
-message:
-    db 'Hello World!', 10, 0
+message: db 'Hello World!', 10, 0

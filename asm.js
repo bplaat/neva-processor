@@ -125,9 +125,16 @@ for (var i = 0; i < lines.length; i++) {
             if (label_regexp.test(label)) {
                 labels[label] = output.length;
             }
+
+            if (parts.length > 0) {
+                opcode_text = parts[0].substring(0, parts[0].indexOf(' ')).toLowerCase();
+                parts[0] = parts[0].substring(parts[0].indexOf(' ')).trim();
+            } else {
+                continue;
+            }
         }
 
-        else if (opcode_text == 'db') {
+        if (opcode_text == 'db') {
             for (var j = 0; j < parts.length; j++) {
                 if (parts[j].substring(0, 1) == '\'' || parts[j].substring(0, 1) == '"') {
                     parts[j] = parts[j].substring(1, parts[j].length - 1);

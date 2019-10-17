@@ -137,9 +137,15 @@ function assembler(data) {
                     labels[label] = output.length;
                     binary_lines.push(label + ': ' + format_byte(output.length));
                 }
+                if (parts.length > 0) {
+                    opcode_text = parts[0].substring(0, parts[0].indexOf(' ')).toLowerCase();
+                    parts[0] = parts[0].substring(parts[0].indexOf(' ')).trim();
+                } else {
+                    continue;
+                }
             }
 
-            else if (opcode_text == 'db') {
+            if (opcode_text == 'db') {
                 var bytes = [];
                 for (var j = 0; j < parts.length; j++) {
                     if (parts[j].substring(0, 1) == '\'' || parts[j].substring(0, 1) == '"') {
@@ -615,8 +621,7 @@ print_string_done:
     pop a
     ret
 
-message:
-    db 'Hello World!', 10, 0
+message: db 'Hello World!', 10, 0
 `,
 `    ; A simple counter program
     load a, 0
@@ -668,10 +673,8 @@ draw:
 draw_done:
     halt
 
-x:
-    db 50
-y:
-    db 50
+x: db 50
+y: db 50
 `
 ];
 
