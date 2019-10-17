@@ -137,7 +137,8 @@ I've also some ideas for the second Neva processor:
 
 - Same 8-bit design
 - 16-bit address bus (for more memory access)
-- More registers 4 or 8 (for better performance)
+- As much as possible compatible at assembler level (for portability)
+- More registers 4, 6 or 8 (for better performance)
 - More instruction modes like: [register + imm] (for more flexibility)
 - More flags and jump instructions like: jump if less signed (for more flexibility)
 - Direct access to the stack pointer as a register (for more flexibility)
