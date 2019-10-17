@@ -257,8 +257,7 @@ function assembler(data) {
 var mem = new Uint8ClampedArray(256), zero_memory,
     clock_count, halted, step, instruction_byte, data_byte,
     instruction_pointer, stack_pointer, registers = new Uint8Array(2),
-    carry_flag, zero_flag, timeout,
-    clock_freq = parseInt(clock_freq_input.value),
+    carry_flag, zero_flag, timeout, clock_freq,
     context = canvas.getContext('2d'), points;
 
 function update_labels() {
@@ -573,15 +572,20 @@ clock_button.onclick = function () {
     update_labels();
 };
 
+if (localStorage.clock_freq != undefined) {
+    clock_freq_input.value = localStorage.clock_freq;
+}
+
+clock_freq = parseInt(clock_freq_input.value);
+
 clock_freq_input.onchange = function () {
     clock_freq = parseInt(clock_freq_input.value);
+    localStorage.clock_freq = clock_freq_input.value;
 };
 
 auto_clock_input.onchange = function () {
     clock_cycle(true);
 };
-
-reset();
 
 var examples = [
 `    ; A simple Hello World example
@@ -712,3 +716,5 @@ document.onkeydown = function (event) {
         event.preventDefault();
     }
 };
+
+reset();
