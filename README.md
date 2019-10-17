@@ -129,3 +129,15 @@ There is an online processor simulator and assembler available at [neva-processo
 
 ## Assembler for Logism
 The file `asm.js` contains a simple assembler written in JavaScript, you need [Node.js](https://nodejs.org/) to use this
+
+
+## Ideas for the Neva II Processor
+I've also some ideas for the second Neva processor:
+
+- Same 8-bit design
+- 16-bit address bus (for more memory access)
+- More registers 4 or 8 (for better performance)
+- More instruction modes like: [register + imm] (for more flexibility)
+- More flags and jump instructions like: jump if less signed (for more flexibility)
+- Direct access to the stack pointer as a register (for more flexibility)
+- Variable instruction length encoding (for smaller code size and better performance)
