@@ -598,6 +598,23 @@ assemble_and_run_button.onclick = function () {
     run_program();
 };
 
+download_bin_button.onclick = function () {
+    var output = assembler(assembly_input.value);
+
+    var file_dump = 'v2.0 raw\n';
+    for (var i = 0; i < output.length; i++) {
+        file_dump += format_byte(output[i]) + '\n';
+    }
+
+    var link = document.createElement('a');
+    link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(file_dump);
+    link.download = 'program.bin';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 reset_button.onclick = reset;
 
 clock_button.onclick = function () {
