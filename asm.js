@@ -128,7 +128,15 @@ for (var i = 0; i < lines.length; i++) {
 
             if (parts.length > 0) {
                 opcode_text = parts[0].substring(0, parts[0].indexOf(' ')).toLowerCase();
-                parts[0] = parts[0].substring(parts[0].indexOf(' ')).trim();
+                parts[0] = parts[0].substring(parts[0].indexOf(' '));
+                if (opcode_text == '') {
+                    opcode_text = parts[0].toLowerCase();
+                    parts = [];
+                } else {
+                    for (var j = 0; j < parts.length; j++) {
+                        parts[j] = parts[j].trim();
+                    }
+                }
             } else {
                 continue;
             }
