@@ -130,6 +130,7 @@ There is an online processor simulator and assembler available at [neva-processo
 ## Assembler for Logism
 The file `asm.js` contains a simple assembler written in JavaScript, you need [Node.js](https://nodejs.org/) to use this
 
+---
 
 ## Ideas for the Neva II Processor
 I've also some ideas for the second Neva processor:
