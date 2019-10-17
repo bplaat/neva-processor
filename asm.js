@@ -50,7 +50,7 @@ function parse_param(param, line) {
 
     if (label_regexp.test(param)) {
         if (labels[param] != undefined) {
-            return { mode: 0, data: labels[param] };
+            return { mode: 0, data: labels[param].position };
         } else {
             future_labels.push({ label: param, line: line, position: output.length });
             return { mode: 0, data: 0 };
@@ -74,7 +74,7 @@ function parse_param(param, line) {
 
         if (label_regexp.test(param)) {
             if (labels[param] != undefined) {
-                return { mode: 2, data: labels[param] };
+                return { mode: 2, data: labels[param].position };
             } else {
                 future_labels.push({ label: param, line: line, position: output.length });
                 return { mode: 2, data: 0 };
@@ -123,7 +123,7 @@ for (var i = 0; i < lines.length; i++) {
         if (opcode_text.substring(opcode_text.length - 1) == ':') {
             var label = opcode_text.substring(0, opcode_text.length - 1);
             if (label_regexp.test(label)) {
-                labels[label] = output.length;
+                labels[label] = { line: i, position: output.length };
             }
 
             if (parts.length > 0) {
@@ -220,7 +220,7 @@ for (var i = 0; i < lines.length; i++) {
 
 for (var i = 0; i < future_labels.length; i++) {
     var pos = future_labels[i].position;
-    output[pos + 1] = labels[future_labels[i].label];
+    output[pos + 1] = labels[future_labels[i].label].position;
 }
 
 var dump = 'v2.0 raw\n';
