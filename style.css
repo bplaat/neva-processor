@@ -4,7 +4,7 @@ body, input, button, select {
     line-height: 1.5;
 }
 
-code, textarea {
+code, textarea, .memory_label {
     font-family: 'Roboto Mono', monospace;
     font-size: 16px;
     line-height: 1.5;
@@ -34,13 +34,14 @@ a {
     color: #16c;
 }
 
-textarea {
+textarea, .memory_label {
     resize: none;
+    margin: 0;
     padding: 8px;
-    border: 1px solid #111;
+    border: 1px solid #222;
 }
 
-textarea:disabled {
+textarea:disabled, .memory_label {
     background-color: #eee;
     color: #333;
 }
@@ -55,7 +56,7 @@ textarea:disabled {
     flex: 1;
 }
 
-.header {
+.header, .canvas-container {
     display: flex;
 }
 
@@ -70,7 +71,7 @@ textarea:disabled {
 }
 
 .toolbar, #canvas {
-    border: 1px solid #111;
+    border: 1px solid #222;
 }
 
 .button-seperation {
@@ -102,12 +103,38 @@ textarea:disabled {
 
 .processor-vars {
     padding: 0 4px;
-    border: 1px solid #111;
+    border: 1px solid #222;
 }
 
 .prevent-scrolling {
     white-space: pre;
     overflow: hidden;
+}
+
+.memory_label {
+    flex-grow: 1;
+    flex-basis: 0;
+    white-space: pre;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.memory-label-container {
+    margin: 8px;
+}
+
+.ip {
+    color: #00f;
+    background-color: #aaf;
+}
+
+.sp {
+    color: #f00;
+    background-color: #faa;
+}
+
+.tag {
+    border-radius: 3px;
 }
 
 .dark {
@@ -119,16 +146,26 @@ textarea:disabled {
     color: #49f;
 }
 
+.dark .ip {
+    color: #eef;
+    background-color: #00d;
+}
+
+.dark .sp {
+    color: #fee;
+    background-color: #d00;
+}
+
 .dark code {
     background-color: #333;
 }
 
-.dark textarea {
+.dark textarea, .dark .memory_label {
     background-color: #111;
     border-color: #444;
     color: #fff;
 }
-.dark textarea:disabled {
+.dark textarea:disabled, .dark .memory_label {
     background-color: #222;
     color: #fff;
 }

@@ -296,17 +296,25 @@ function update_labels() {
     carry_flag_label.textContent = format_boolean(carry_flag);
     zero_flag_label.textContent = format_boolean(zero_flag);
 
-    memory_label.value = '';
+    var memory_label_html = '';
     var count = 0;
     for (var i = 0; i < 256; i++) {
-        memory_label.value += format_byte(mem[i]) + ' ';
+        if (i == instruction_pointer) {
+            memory_label_html += '<span class="ip tag">' + format_byte(mem[i]) + '</span> ';
+        } else if (i == stack_pointer) {
+            memory_label_html += '<span class="sp tag">' + format_byte(mem[i]) + '</span> ';
+        } else {
+            memory_label_html += format_byte(mem[i]) + ' ';
+        }
+
         if (count == 7 && i != 255) {
-            memory_label.value += '\n';
+            memory_label_html += '\n';
             count = 0;
         } else {
             count++;
         }
     }
+    memory_label.innerHTML = '<div class="memory-label-container">' + memory_label_html + '</div>';
 
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.beginPath();

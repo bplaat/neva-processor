@@ -68,20 +68,20 @@
                             Data byte: <code id="data_byte_label"></code>
                         </p>
                         <p>
-                            Instruction pointer: <code id="instruction_pointer_label"></code> |
+                            Instruction pointer: <code class="ip" id="instruction_pointer_label"></code> |
                             Register A: <code id="register_a_label"></code> |
                             Register B: <code id="register_b_label"></code>
                         </p>
                         <p>
-                            Stack pointer: <code id="stack_pointer_label"></code> |
+                            Stack pointer: <code class="sp" id="stack_pointer_label"></code> |
                             Carry flag: <code id="carry_flag_label"></code> |
                             Zero flag: <code id="zero_flag_label"></code>
                         </p>
                     </div>
-                    <textarea id="memory_label" class="flex" disabled></textarea>
+                    <div id="memory_label" class="memory_label"></div>
                 </div>
                 <textarea id="output_label" class="flex" disabled></textarea>
-                <div>
+                <div class="canvas-container">
                     <canvas id="canvas" width="256" height="256"></canvas>
                 </div>
             </div>
