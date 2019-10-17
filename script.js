@@ -60,7 +60,7 @@ function parse_param(param, line) {
 
     if (label_regexp.test(param)) {
         if (labels[param] != undefined) {
-            return { mode: 0, data: labels[param] };
+            return { mode: 0, data: labels[param].position };
         } else {
             future_labels.push({ label: param, line: line, position: output.length });
             return { mode: 0, data: 0 };
@@ -84,7 +84,7 @@ function parse_param(param, line) {
 
         if (label_regexp.test(param)) {
             if (labels[param] != undefined) {
-                return { mode: 2, data: labels[param] };
+                return { mode: 2, data: labels[param].position };
             } else {
                 future_labels.push({ label: param, line: line, position: output.length });
                 return { mode: 2, data: 0 };
@@ -135,7 +135,7 @@ function assembler(data) {
             if (opcode_text.substring(opcode_text.length - 1) == ':') {
                 label = opcode_text.substring(0, opcode_text.length - 1);
                 if (label_regexp.test(label)) {
-                    labels[label] = output.length;
+                    labels[label] = { line: i, position: output.length };
                     label += ': ' + format_byte(output.length);
                 }
                 if (parts.length > 0) {
@@ -145,7 +145,9 @@ function assembler(data) {
                         opcode_text = parts[0].toLowerCase();
                         parts = [];
                     } else {
-                        parts[0].trim();
+                        for (var j = 0; j < parts.length; j++) {
+                            parts[j] = parts[j].trim();
+                        }
                     }
                 } else {
                     binary_lines.push(label);
@@ -248,14 +250,22 @@ function assembler(data) {
     }
 
     for (var i = 0; i < future_labels.length; i++) {
-        var pos = future_labels[i].position;
-        output[pos + 1] = labels[future_labels[i].label];
+        var position = future_labels[i].position;
+        output[position + 1] = labels[future_labels[i].label].position;
+
+        var label = '';
+        for (var label_name in labels) {
+            if (labels[label_name].position == position && labels[label_name].line == future_labels[i].line) {
+                label = label_name + ': ' + format_byte(position);
+            }
+        }
+
         binary_lines[future_labels[i].line] =
-            '    ' + pad_string((output[pos] >> 3).toString(2), 5, '0') + ' ' +
-            ((output[pos] >> 2) & 1).toString(2) + ' ' +
-            pad_string((output[pos] & 3).toString(2), 2, '0') + '  ' +
-            pad_string(output[pos + 1].toString(2), 8, '0') + ' | ' +
-            format_byte(output[pos]) + ' ' + format_byte(output[pos + 1]);
+            label + '    ' + pad_string((output[position] >> 3).toString(2), 5, '0') + ' ' +
+            ((output[position] >> 2) & 1).toString(2) + ' ' +
+            pad_string((output[position] & 3).toString(2), 2, '0') + '  ' +
+            pad_string(output[position + 1].toString(2), 8, '0') + ' | ' +
+            format_byte(output[position]) + ' ' + format_byte(output[position + 1]);
     }
 
     binary_label.value = '';
