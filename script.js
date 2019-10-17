@@ -131,16 +131,24 @@ function assembler(data) {
                 }
             }
 
+            var label = '';
             if (opcode_text.substring(opcode_text.length - 1) == ':') {
-                var label = opcode_text.substring(0, opcode_text.length - 1);
+                label = opcode_text.substring(0, opcode_text.length - 1);
                 if (label_regexp.test(label)) {
                     labels[label] = output.length;
-                    binary_lines.push(label + ': ' + format_byte(output.length));
+                    label += ': ' + format_byte(output.length);
                 }
                 if (parts.length > 0) {
                     opcode_text = parts[0].substring(0, parts[0].indexOf(' ')).toLowerCase();
-                    parts[0] = parts[0].substring(parts[0].indexOf(' ')).trim();
+                    parts[0] = parts[0].substring(parts[0].indexOf(' '));
+                    if (opcode_text == '') {
+                        opcode_text = parts[0].toLowerCase();
+                        parts = [];
+                    } else {
+                        parts[0].trim();
+                    }
                 } else {
+                    binary_lines.push(label);
                     continue;
                 }
             }
@@ -173,7 +181,7 @@ function assembler(data) {
                         }
                     }
                 }
-                binary_lines.push('    db ' + bytes.join(' '));
+                binary_lines.push(label + '    db ' + bytes.join(' '));
             }
 
             else {
@@ -227,7 +235,7 @@ function assembler(data) {
                 output.push(instruction[0], instruction[1]);
 
                 binary_lines.push(
-                    '    ' + pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
+                    label + '    ' + pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
                     ((instruction[0] >> 2) & 1).toString(2) + ' ' +
                     pad_string((instruction[0] & 3).toString(2), 2, '0') + '  ' +
                     pad_string(instruction[1].toString(2), 8, '0') + ' | ' +
