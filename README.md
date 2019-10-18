@@ -73,7 +73,7 @@ There is room for 32 different instructions:
 15 = jc = if (carry) ip = data
 16 = jnc = if (!carry) ip = data
 17 = jz = if (zero) ip = data
-18 = jnz = if (!carry) ip = data
+18 = jnz = if (!zero) ip = data
 19 = ja = if (!carry && !zero) ip = data
 20 = jna = if (carry && zero) ip = data
 
@@ -143,3 +143,13 @@ I've also some ideas for the second Neva processor:
 - More flags and jump instructions like: jump if less signed (for more flexibility)
 - Direct access to the stack pointer as a register (for more flexibility)
 - Variable instruction length encoding (for smaller code size and better performance)
+
+I think it would also be nice to make a simple VGA video card / generator for this new processor that can do the following:
+
+- It outputs a VGA signal
+- It has it's own video ram for fast access
+- It only has text modes with a 8x8 pixel character font with the [Code page 437](https://en.wikipedia.org/wiki/Code_page_437) symbols
+- The character font can be changed
+- Different text mode sizes: 20x15, 40x30, 80x60
+- 4-bit color so 16 different colors in a nice pallet
+- It is connect via a small memory interface with the Neva II processor
