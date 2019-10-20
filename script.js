@@ -60,7 +60,7 @@ function parse_param(param, line) {
 
     if (label_regexp.test(param)) {
         if (labels[param] != undefined) {
-            return { mode: 0, data: labels[param].position };
+            return { mode: 0, data: labels[param].value };
         } else {
             future_labels.push({ label: param, line: line, position: output.length });
             return { mode: 0, data: 0 };
@@ -84,7 +84,7 @@ function parse_param(param, line) {
 
         if (label_regexp.test(param)) {
             if (labels[param] != undefined) {
-                return { mode: 2, data: labels[param].position };
+                return { mode: 2, data: labels[param].value };
             } else {
                 future_labels.push({ label: param, line: line, position: output.length });
                 return { mode: 2, data: 0 };
@@ -135,7 +135,7 @@ function assembler(data) {
             if (opcode_text.substring(opcode_text.length - 1) == ':') {
                 label = opcode_text.substring(0, opcode_text.length - 1);
                 if (label_regexp.test(label)) {
-                    labels[label] = { line: i, position: output.length };
+                    labels[label] = { line: i, value: output.length };
                     label += ': ' + format_byte(output.length);
                 }
                 if (parts.length > 0) {
@@ -155,7 +155,13 @@ function assembler(data) {
                 }
             }
 
-            if (opcode_text == 'db') {
+            if (parts[0] != undefined && parts[0].substring(0, parts[0].indexOf(' ')) == 'equ') {
+                var data = parse_param(parts[0].substring(parts[0].indexOf(' ')).trim(), i).data;
+                labels[opcode_text] = { line: i, value: data };
+                binary_lines.push('    ' + opcode_text + ' equ ' + format_byte(data));
+            }
+
+            else if (opcode_text == 'db') {
                 var bytes = [];
                 for (var j = 0; j < parts.length; j++) {
                     if (parts[j].substring(0, 1) == '\'' || parts[j].substring(0, 1) == '"') {
@@ -174,7 +180,7 @@ function assembler(data) {
                     else {
                         var calculation;
                         try {
-                            calculation = Function('$', '"use strict";return (' + param + ')')(output.length);
+                            calculation = Function('$', '"use strict";return (' + parts[j] + ')')(output.length);
                         } catch (error) {}
                         if (calculation != undefined) {
                             var c = Math.floor(calculation) & 255;
@@ -251,11 +257,11 @@ function assembler(data) {
 
     for (var i = 0; i < future_labels.length; i++) {
         var position = future_labels[i].position;
-        output[position + 1] = labels[future_labels[i].label].position;
+        output[position + 1] = labels[future_labels[i].label].value;
 
         var label = '';
         for (var label_name in labels) {
-            if (labels[label_name].position == position && labels[label_name].line == future_labels[i].line) {
+            if (labels[label_name].value == position && labels[label_name].line == future_labels[i].line) {
                 label = label_name + ': ' + format_byte(position);
             }
         }
