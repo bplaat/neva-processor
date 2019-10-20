@@ -1,36 +1,45 @@
 # The Neva 8-bit Processor
-A simple educational 8-bit processor with assembler
+The Neva 8-bit Processor is a simple, educational 8-bit processor design with dedicated assembler. I've made this processor for school and this repo contains all the work off that project. That includes the processor design, assembler and a complete online simulation environment so you can create programs quickly and run them immediately.
 
-## Design
+## The Processor Design
 The file `design.circ` is a [Logism](http://www.cburch.com/logisim/) circuit which contains the complete processor:
 
 ![Logisim Design](design.png)
 
 ## Inspiration
+There where is some sites and articles that inspired my to build this project:
 - https://en.wikipedia.org/wiki/MOS_Technology_6502
 - https://en.wikichip.org/wiki/intel/mcs-8/isa
 - https://en.wikipedia.org/wiki/X86_instruction_listings
 - https://schweigi.github.io/assembler-simulator/
 
 ## Instruction encoding
-There are two different instruction encodings the first is the immediate data encoding and the second is the register encoding:
+The instruction encoding is very simple because each instruction is two bytes long and these two bytes are then subdivided into different sections which mean different things.
+
+There are two different instruction encodings for the processor the first is the immediate data encoding and the second is the register encoding:
 
 ### Data encoding:
+The first two bits of the first byte are the mode selector (more information about that below), the second bit is the destination register selector and the last five bits are the instruction opcode, the other byte contains an immediate data.
 ```
   5     1   2   |  8
 opcode reg mode | imm
 ```
 
 ### Register encoding:
+The other encoding is almost the same the only difference is that the immediate data byte is changed to one source register selector and seven zeros.
 ```
   5     1   2   |  7    1
 opcode reg mode | null reg
 ```
 
 ## Registers
+The processor has two 8-bit registers: A and B, there are other registers but those are not direct accessible. You use 0 for the A register and 1 for the B register. On reset those are set to zero.
+
+You also have the instruction pointer and the stack pointer registers, those are set on reset to zero and a high value. There are also two flag d flip-flops those are set by some instructions and are used for the conditional jump instructions.
 ```
 0 = A = 0
 1 = B = 0
+
 ip = instruction pointer = 0
 sp = stack pointer = 0xfe or 0xfb
 carry flag = 0
@@ -38,6 +47,11 @@ zero flag = 0
 ```
 
 ## Modes
+Like I sad each instruction has two bits that select a mode which the instruction is run in. This mode chooses what the source data is for the instruction. There are four different modes:
+- The first is that the next immediate byte is used as the data.
+- The second is that the first bit of the next byte is used to select a register which contains the data.
+- The third mode is that de next immediate byte is used as a address for the memory and the read byte is used as data.
+- The fourth mode reads a register and uses it as the address for the memory and uses the byte that it reads as data.
 ```
 0 = data = imm
 1 = data = reg
@@ -46,8 +60,7 @@ zero flag = 0
 ```
 
 ## Instructions
-There is room for 32 different instructions:
-
+Because we use five bits for the instruction opcode there is room for 32 different instructions:
 ```
 0 = nop
 
@@ -87,7 +100,7 @@ There is room for 32 different instructions:
 31 = halt
 ```
 
-There are also some pseudo instructions which translates to other instructions:
+There are also some pseudo instructions which the assembler translates to other instructions:
 ```
 mov reg, data = load reg, data
 mov [data], reg = store reg, [data]
@@ -108,8 +121,7 @@ jbe data = jna data
 ```
 
 ## Memory I/O interface
-If you write to some special memory locations you can communicate with some I/O devices:
-
+All the input and output capabilities of the computer are memory based. So you need some logic for to decipher of you need to do something or do nothing. There are some static places which are connected to some devices:
 ```
 
 0xff = Write an ASCII character to the terminal display
@@ -128,7 +140,7 @@ There is an online processor simulator and assembler available at [neva-processo
 
 
 ## Assembler for Logism
-The file `asm.js` contains a simple assembler written in JavaScript, you need [Node.js](https://nodejs.org/) to use this
+The file `asm.js` contains a simple assembler written in JavaScript, you need [Node.js](https://nodejs.org/) to use this on your computer
 
 ---
 
