@@ -121,7 +121,7 @@ jbe data = jna data
 ```
 
 ## Memory I/O interface
-All the input and output capabilities of the computer are memory based. So you need some logic for to decipher of you need to do something or do nothing. There are some static places which are connected to some devices:
+All input and output options of the computer are based on memory. So you need some logic to decipher if you have to do something or not at all. There are several static places to which some things are connected:
 ```
 
 0xff = Write an ASCII character to the terminal display
