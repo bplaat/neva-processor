@@ -71,7 +71,7 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 3 = add = reg += data
 4 = adc = reg += data + carry
 5 = sub = reg -= data
-6 = sbb = reg -= data - carry
+6 = sbb = reg -= data + carry
 7 = cmp = reg - data (set only flags)
 
 -- effects zero flag
@@ -121,7 +121,7 @@ jbe data = jna data
 ```
 
 ## Memory I/O interface
-All input and output options of the computer are based on memory. So you need some logic to decipher if you have to do something or not at all. There are several static places to which some things are connected:
+All input and output options of the computer are based on memory addresses. So you need to read or write to some specific addresses to communicate with other devices:
 ```
 
 0xff = Write an ASCII character to the terminal display
