@@ -364,6 +364,25 @@ function reset () {
     update_labels();
 }
 
+function write_to_memory (address, data) {
+    mem[address] = data;
+
+    if (address == 0xfe) {
+        if (data == 0) {
+            points.push({ type: 0, x: mem[0xfc], y: mem[0xfd] });
+        }
+        if (data == 1) {
+            points.push({ type: 1, x: mem[0xfc], y: mem[0xfd] });
+        }
+        if (data == 2) {
+            points = [];
+        }
+    }
+    if (address == 0xff) {
+        output_label.value += String.fromCharCode(data & 127);
+    }
+}
+
 function clock_cycle (auto_clock) {
     if (halted) return;
 
@@ -408,38 +427,10 @@ function clock_cycle (auto_clock) {
 
         if (opcode == opcodes.store) {
             if (mode == 2) {
-                mem[data_byte] = registers[register];
-                if (data_byte == 0xfe) {
-                    if (registers[register] == 0) {
-                        points.push({ type: 0, x: mem[0xfc], y: mem[0xfd] });
-                    }
-                    if (registers[register] == 1) {
-                        points.push({ type: 1, x: mem[0xfc], y: mem[0xfd] });
-                    }
-                    if (registers[register] == 2) {
-                        points = [];
-                    }
-                }
-                if (data_byte == 0xff) {
-                    output_label.value += String.fromCharCode(registers[register] & 127);
-                }
+                write_to_memory(data_byte, registers[register]);
             }
             if (mode == 3) {
-                mem[registers[data_byte]] = registers[register];
-                if (registers[data_byte] == 0xfe) {
-                    if (registers[register] == 0) {
-                        points.push({ type: 0, x: mem[0xfc], y: mem[0xfd] });
-                    }
-                    if (registers[register] == 1) {
-                        points.push({ type: 1, x: mem[0xfc], y: mem[0xfd] });
-                    }
-                    if (registers[register] == 2) {
-                        points = [];
-                    }
-                }
-                if (registers[data_byte] == 0xff) {
-                    output_label.value += String.fromCharCode(registers[register] & 127);
-                }
+                write_to_memory(registers[data_byte], registers[register]);
             }
         }
 
