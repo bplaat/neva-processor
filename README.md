@@ -26,22 +26,22 @@ opcode reg mode | imm
 ```
 
 ### Register encoding:
-The other encoding is almost the same the only difference is that the immediate data byte is changed to one source register selector and seven zeros.
+The other encoding is almost the same the only difference is that the immediate data byte is changed to one source register selector and a 6-bit displacement.
 ```
-  5     1   2   |  7    1
-opcode reg mode | null reg
+  5     1   2   |  2   6
+opcode reg mode | reg dis
 ```
 
 ## Registers
-The processor has two 8-bit registers: A and B, there are other registers but those are not direct accessible. You use 0 for the A register and 1 for the B register. On reset those are set to zero.
-
-You also have the instruction pointer and the stack pointer registers, those are set on reset to zero and a high value. There are also two flag d flip-flops those are set by some instructions and are used for the conditional jump instructions.
+The processor has two 8-bit registers: A and B, there is also a instruction and stack pointer but those are only readable. You use 0 for the A register, 1 for the B register, 2 for the instruction pointer and 3 for the stack pointer. There are also two flag d flip-flops those are set by some instructions and are used for the conditional jump and branch instructions.
 ```
 0 = A = 0
 1 = B = 0
 
-ip = instruction pointer = 0
-sp = stack pointer = 0xfe or 0xfb
+-- Not writable and storable
+2 = ip = instruction pointer = 0
+3 = sp = stack pointer = 0xfe or 0xfb
+
 carry flag = 0
 zero flag = 0
 ```
@@ -49,14 +49,14 @@ zero flag = 0
 ## Modes
 Like I sad each instruction has two bits that select a mode which the instruction is run in. This mode chooses what the source data is for the instruction. There are four different modes:
 - The first is that the next immediate byte is used as the data.
-- The second is that the first bit of the next byte is used to select a register which contains the data.
+- The second is that the first two bits of the next byte is used to select a register which contains the data and then adds the displacement.
 - The third mode is that de next immediate byte is used as a address for the memory and the read byte is used as data.
-- The fourth mode reads a register and uses it as the address for the memory and uses the byte that it reads as data.
+- The fourth mode reads a register adds the displacement and uses it as the address for the memory and uses the byte that it reads as data.
 ```
 0 = data = imm
-1 = data = reg
+1 = data = reg + dis
 2 = address = imm, data = [address]
-3 = address = reg, data = [address]
+3 = address = reg + dis, data = [address]
 ```
 
 ## Instructions
@@ -147,13 +147,11 @@ The file `asm.js` contains a simple assembler written in JavaScript, you need [N
 ## Ideas for the Neva II Processor
 I've also some ideas for the second Neva processor:
 
-- Same 8-bit design
 - 16-bit address bus (for more memory access)
 - As much as possible compatible at assembler level (for portability)
 - More registers 4, 6 or 8 (for better performance)
-- More instruction modes like: [register + imm] (for more flexibility)
 - More flags and jump instructions like: jump if less signed (for more flexibility)
-- Direct access to the stack pointer as a register (for more flexibility)
+- Direct write access to the stack pointer as a register (for more flexibility)
 - Variable instruction length encoding (for smaller code size and better performance)
 
 I think it would also be nice to make a simple VGA video card / generator for this new processor that can do the following:

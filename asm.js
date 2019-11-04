@@ -19,15 +19,12 @@ var opcodes = {
     'ja': 19, 'jnbe': 19,
     'jna': 20, 'jbe': 20,
 
-    'push': 21,
-    'pop': 22,
-    'call': 23,
-    'ret': 24,
+    'push': 21, 'pop': 22, 'call': 23, 'ret': 24,
 
     'halt': 31
 };
 
-var registers_names = { 'a': 0, 'b': 1 };
+var registers_names = { 'a': 0, 'b': 1, 'ip': 2, 'sp': 3 };
 
 var fs = require('fs');
 var data = fs.readFileSync(process.argv[2]).toString();
@@ -35,13 +32,31 @@ var data = fs.readFileSync(process.argv[2]).toString();
 var label_regexp = /^[a-zA-Z_][a-zA-Z0-9_]*$/,
     output, labels, future_labels;
 
-function parse_param(param, line) {
+function calculate (string) {
+    try {
+        return Math.floor(Function('$', '"use strict";return (' + string + ')')(output.length)) & 255;
+    } catch (error) {}
+}
+
+function parse_param (param, line) {
     if (!isNaN(param)) {
         return { mode: 0, data: parseInt(param) & 255 };
     }
 
-    if (registers_names[param.toLowerCase()] != undefined) {
-        return { mode: 1, data: registers_names[param.toLowerCase()] };
+    var register = registers_names[param.toLowerCase()];
+    var position = param.indexOf('+') != -1 ? param.indexOf('+') : param.indexOf('-');
+    if (position != -1) {
+        register = registers_names[param.substring(0, position).trim().toLowerCase()];
+    }
+    if (register != undefined) {
+        if (position != -1) {
+            var calculation = calculate(param.substring(position));
+            if (calculation != undefined) {
+                return { mode: 1, data: (register << 6) | (calculation & 63) };
+            }
+        } else {
+            return { mode: 1, data: register << 6 };
+        }
     }
 
     if (param.substring(0, 1) == '\'' || param.substring(0, 1) == '"') {
@@ -64,8 +79,20 @@ function parse_param(param, line) {
             return { mode: 2, data: parseInt(param) & 255 };
         }
 
-        if (registers_names[param.toLowerCase()] != undefined) {
-            return { mode: 3, data: registers_names[param.toLowerCase()] };
+        var register = registers_names[param.toLowerCase()];
+        var position = param.indexOf('+') != -1 ? param.indexOf('+') : param.indexOf('-');
+        if (position != -1) {
+            register = registers_names[param.substring(0, position).trim().toLowerCase()];
+        }
+        if (register != undefined) {
+            if (position != -1) {
+                var calculation = calculate(param.substring(position));
+                if (calculation != undefined) {
+                    return { mode: 3, data: (register << 6) | (calculation & 63) };
+                }
+            } else {
+                return { mode: 3, data: register << 6 };
+            }
         }
 
         if (param.substring(0, 1) == '\'' || param.substring(0, 1) == '"') {
@@ -81,20 +108,14 @@ function parse_param(param, line) {
             }
         }
 
-        var calculation;
-        try {
-            calculation = Function('$', '"use strict";return (' + param + ')')(output.length);
-        } catch (error) {}
+        var calculation = calculate(param);
         if (calculation != undefined) {
-            return { mode: 2, data: Math.floor(calculation) & 255 };
+            return { mode: 2, data: calculation };
         }
     } else {
-        var calculation;
-        try {
-            calculation = Function('$', '"use strict";return (' + param + ')')(output.length);
-        } catch (error) {}
+        var calculation = calculate(param);
         if (calculation != undefined) {
-            return { mode: 0, data: Math.floor(calculation) & 255 };
+            return { mode: 0, data: calculation };
         }
     }
     console.log('Error on line: ' + line);
@@ -159,12 +180,9 @@ for (var i = 0; i < lines.length; i++) {
                     output.push(parseInt(parts[j]) & 255);
                 }
                 else {
-                    var calculation;
-                    try {
-                        calculation = Function('$', '"use strict";return (' + parts[j] + ')')(output.length);
-                    } catch (error) {}
+                    var calculation = calculate(parts[j]);
                     if (calculation != undefined) {
-                        output.push(Math.floor(calculation) & 255);
+                        output.push(calculation);
                     }
                 }
             }

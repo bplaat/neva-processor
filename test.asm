@@ -1,10 +1,26 @@
-    ; Return number test program
-    push 3
-    push 2
-    push 1
-    call abc
+    ; Recursive fibonacci number example
+    push 13
+    call fib
     halt
 
-abc:
-    mov b, 3
-    ret b
+fib:
+    push b
+
+    mov a, [sp + 3]
+    cmp a, 0
+    je fib_done
+    cmp a, 1
+    je fib_done
+
+    mov b, a
+    push b - 1
+    call fib
+
+    push b - 2
+    mov b, a
+    call fib
+
+    add a, b
+fib_done:
+    pop b
+    ret 1
