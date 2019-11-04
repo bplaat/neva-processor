@@ -219,6 +219,10 @@ function assembler(data) {
                         var register = registers_names[parts[0].toLowerCase()] << 2;
                         instruction[0] = opcode | register | 2;
                         instruction[1] = 0;
+                    } else if (opcode_text == 'ret') {
+                        var param = parse_param(parts[0], i);
+                        instruction[0] = opcode | (param.mode + 2);
+                        instruction[1] = param.data;
                     } else {
                         var param = parse_param(parts[0], i);
                         instruction[0] = opcode | param.mode;
@@ -364,37 +368,15 @@ function reset () {
     update_labels();
 }
 
-function write_to_memory (address, data) {
-    mem[address] = data;
-
-    if (address == 0xfe) {
-        if (data == 0) {
-            points.push({ type: 0, x: mem[0xfc], y: mem[0xfd] });
-        }
-        if (data == 1) {
-            points.push({ type: 1, x: mem[0xfc], y: mem[0xfd] });
-        }
-        if (data == 2) {
-            points = [];
-        }
-    }
-    if (address == 0xff) {
-        output_label.value += String.fromCharCode(data & 127);
-    }
-}
-
 function clock_cycle (auto_clock) {
     if (halted) return;
 
-    if (clock_count == 90000 && unending_loop_input.checked) {
+    if (clock_count == 150000 && unending_loop_input.checked) {
         alert('Unending loop detected!');
         halted = true;
     } else {
         clock_count++;
     }
-
-    instruction_pointer &= 255;
-    stack_pointer &= 255;
 
     if (step == 0) {
         step++;
@@ -415,22 +397,44 @@ function clock_cycle (auto_clock) {
         var register = (instruction_byte >> 2) & 1;
         var mode = instruction_byte & 3;
 
-        var data;
-        if (mode == 0) data = data_byte;
-        if (mode == 1) data = registers[data_byte];
-        if (mode == 2) data = mem[data_byte];
-        if (mode == 3) data = mem[registers[data_byte]];
+        var data, address;
+        if (mode == 0) {
+            data = data_byte;
+        }
+        if (mode == 1) {
+            data = registers[data_byte];
+        }
+        if (mode == 2) {
+            address = data_byte;
+            data = mem[address];
+        }
+        if (mode == 3) {
+            address = registers[data_byte];
+            data = mem[address];
+        }
 
         if (opcode == opcodes.load) {
             registers[register] = data;
         }
 
         if (opcode == opcodes.store) {
-            if (mode == 2) {
-                write_to_memory(data_byte, registers[register]);
-            }
-            if (mode == 3) {
-                write_to_memory(registers[data_byte], registers[register]);
+            if (mode == 2 || mode == 3) {
+                mem[address] = registers[register];
+
+                if (address == 0xfe) {
+                    if (registers[register] == 0) {
+                        points.push({ type: 0, x: mem[0xfc], y: mem[0xfd] });
+                    }
+                    if (registers[register] == 1) {
+                        points.push({ type: 1, x: mem[0xfc], y: mem[0xfd] });
+                    }
+                    if (registers[register] == 2) {
+                        points = [];
+                    }
+                }
+                if (address == 0xff) {
+                    output_label.value += String.fromCharCode(registers[register] & 127);
+                }
             }
         }
 
@@ -512,7 +516,7 @@ function clock_cycle (auto_clock) {
             }
         }
         if (opcode == opcodes.pop) {
-            if (mode == 2) {
+            if (mode == 2 || mode == 3) {
                 registers[register] = mem[++stack_pointer];
             }
         }
@@ -523,8 +527,9 @@ function clock_cycle (auto_clock) {
             }
         }
         if (opcode == opcodes.ret) {
-            if (mode == 2) {
-                instruction_pointer = mem[++stack_pointer];
+            if (mode == 2 || mode == 3) {
+                instruction_pointer = mem[stack_pointer + 1];
+                stack_pointer += address + 1;
             }
         }
 
@@ -532,6 +537,9 @@ function clock_cycle (auto_clock) {
             halted = true;
         }
     }
+
+    instruction_pointer &= 255;
+    stack_pointer &= 255;
 
     if (auto_clock && auto_clock_input.checked) {
         var time = 1000 / clock_freq;

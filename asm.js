@@ -197,6 +197,10 @@ for (var i = 0; i < lines.length; i++) {
                     var register = registers_names[parts[0].toLowerCase()] << 2;
                     instruction[0] = opcode | register | 2;
                     instruction[1] = 0;
+                } else if (opcode_text == 'ret') {
+                    var param = parse_param(parts[0], i);
+                    instruction[0] = opcode | (param.mode + 2);
+                    instruction[1] = param.data;
                 } else {
                     var param = parse_param(parts[0], i);
                     instruction[0] = opcode | param.mode;

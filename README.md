@@ -55,8 +55,8 @@ Like I sad each instruction has two bits that select a mode which the instructio
 ```
 0 = data = imm
 1 = data = reg
-2 = data = [imm]
-3 = data = [reg]
+2 = address = imm, data = [address]
+3 = address = reg, data = [address]
 ```
 
 ## Instructions
@@ -65,7 +65,7 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 0 = nop
 
 1 = load = reg = data
-2 = store (mode = 2 or mode = 3) = mem[data] = reg
+2 = store (mode = 2 or mode = 3) = mem[address] = reg
 
 -- effects carray flag and zero flag
 3 = add = reg += data
@@ -91,9 +91,9 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 20 = jna = if (carry && zero) ip = data
 
 21 = push (mode = 0 or mode = 1) = mem[sp--] = data
-22 = pop (mode = 2) = reg = mem[++sp]
+22 = pop (mode = 2 or mode = 3) = reg = mem[++sp]
 23 = call (mode = 0 or mode = 1) = mem[sp--] = ip, ip = data
-24 = ret (mode = 2) = ip = mem[++sp]
+24 = ret (mode = 2 or mode = 3) = ip = mem[sp + 1], sp += address + 1
 
 25 / 30 = nothing
 
