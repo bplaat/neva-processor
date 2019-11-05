@@ -7,10 +7,8 @@ fib:
     push b
 
     mov a, [sp + 3]
-    cmp a, 0
-    je fib_done
-    cmp a, 1
-    je fib_done
+    cmp a, 2
+    jb fib_done
 
     mov b, a
     push b - 1

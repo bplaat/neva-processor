@@ -70,18 +70,21 @@ textarea:disabled, .memory_label {
     line-height: 48px;
 }
 
+.toolbar {
+    display: flex;
+    align-items: center;
+}
+
 .toolbar, #canvas {
     border: 1px solid #222;
 }
 
-.button-seperation {
-    margin-right: 16px;
+input[type="checkbox"] {
+    margin-right: 8px;
 }
 
-.right-checkbox {
-    float: right;
-    line-height: 36px;
-    margin-right: 16px;
+.button-seperation {
+    margin-right: 24px;
 }
 
 .editors {
@@ -126,14 +129,12 @@ textarea:disabled, .memory_label {
 .ip {
     color: #00f;
     background-color: #aaf;
+    border-radius: 3px;
 }
 
 .sp {
     color: #f00;
     background-color: #faa;
-}
-
-.tag {
     border-radius: 3px;
 }
 

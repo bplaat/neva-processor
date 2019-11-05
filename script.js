@@ -328,9 +328,9 @@ function update_labels () {
     var count = 0;
     for (var i = 0; i < 256; i++) {
         if (i == registers[registers_names.ip]) {
-            memory_label_html += '<span class="ip tag">' + format_byte(mem[i]) + '</span> ';
+            memory_label_html += '<span class="ip">' + format_byte(mem[i]) + '</span> ';
         } else if (i == registers[registers_names.sp]) {
-            memory_label_html += '<span class="sp tag">' + format_byte(mem[i]) + '</span> ';
+            memory_label_html += '<span class="sp">' + format_byte(mem[i]) + '</span> ';
         } else {
             memory_label_html += format_byte(mem[i]) + ' ';
         }
@@ -756,10 +756,8 @@ fib:
     push b
 
     mov a, [sp + 3]
-    cmp a, 0
-    je fib_done
-    cmp a, 1
-    je fib_done
+    cmp a, 2
+    jb fib_done
 
     mov b, a
     push b - 1
