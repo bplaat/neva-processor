@@ -88,7 +88,7 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 17 = jz (reg = 0) = if (zero) ip = data
 18 = jnz (reg = 0) = if (!zero) ip = data
 19 = ja (reg = 0) = if (!carry && !zero) ip = data
-20 = jna (reg = 0) = if (carry && zero) ip = data
+20 = jna (reg = 0) = if (carry || zero) ip = data
 
 14 = bra (reg = 1) = ip += data
 15 = bc (reg = 1) = if (carry) ip += data
@@ -96,7 +96,7 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 17 = bz (reg = 1) = if (zero) ip += data
 18 = bnz (reg = 1) = if (!zero) ip += data
 19 = ba (reg = 1) = if (!carry && !zero) ip += data
-20 = bna (reg = 1) = if (carry && zero) ip += data
+20 = bna (reg = 1) = if (carry || zero) ip += data
 
 21 = push (mode = 0 or mode = 1) = mem[sp--] = data
 22 = pop (mode = 2 or mode = 3) = reg = mem[++sp]

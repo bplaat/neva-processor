@@ -548,7 +548,7 @@ function clock_cycle (auto_clock) {
         if (opcode == opcodes.ja && register == 0 && !carry_flag && !zero_flag) {
             registers[registers_names.ip] = data;
         }
-        if (opcode == opcodes.jna && register == 0 && carry_flag && zero_flag) {
+        if (opcode == opcodes.jna && register == 0 && (carry_flag || zero_flag)) {
             registers[registers_names.ip] = data;
         }
 
@@ -570,7 +570,7 @@ function clock_cycle (auto_clock) {
         if (opcode == opcodes.ba && register == 1 && !carry_flag && !zero_flag) {
             registers[registers_names.ip] += data;
         }
-        if (opcode == opcodes.bna && register == 1 && carry_flag && zero_flag) {
+        if (opcode == opcodes.bna && register == 1 && (carry_flag || zero_flag)) {
             registers[registers_names.ip] += data;
         }
 
@@ -819,8 +819,8 @@ loop:
 
     inc b
 
-    cmp b, 13 + 1
-    bne loop
+    cmp b, 13
+    bbe loop
     halt
 
 fib:

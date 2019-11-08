@@ -18,8 +18,8 @@ loop:
 
     inc b
 
-    cmp b, 13 + 1
-    bne loop
+    cmp b, 13
+    bbe loop
     halt
 
 fib:
