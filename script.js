@@ -1,26 +1,34 @@
 var opcodes = {
-    'nop': 0,
+    nop: 0,
 
-    'load': 1, 'mov': 1, 'store': 2,
+    load: 1, mov: 1, store: 2,
 
-    'add': 3, 'adc': 4, 'sub': 5, 'sbb': 6, 'cmp': 7,
+    add: 3, adc: 4, sub: 5, sbb: 6, cmp: 7,
 
-    'and': 8, 'or': 9, 'xor': 10, 'not': 11, 'shl': 12, 'shr': 13,
+    and: 8, or: 9, xor: 10, not: 11, shl: 12, shr: 13,
 
-    'jmp': 14,
-    'jc': 15, 'jb': 15, 'jnae': 15,
-    'jnc': 16, 'jnb': 16, 'jae': 16,
-    'jz': 17, 'je': 17,
-    'jnz': 18, 'jne': 18,
-    'ja': 19, 'jnbe': 19,
-    'jna': 20, 'jbe': 20,
+    jmp: 14,
+    jc: 15, jb: 15, jnae: 15,
+    jnc: 16, jnb: 16, jae: 16,
+    jz: 17, je: 17,
+    jnz: 18, jne: 18,
+    ja: 19, jnbe: 19,
+    jna: 20, jbe: 20,
 
-    'push': 21, 'pop': 22, 'call': 23, 'ret': 24,
+    bra: 14,
+    bc: 15, bb: 15, bnae: 15,
+    bnc: 16, bnb: 16, bae: 16,
+    bz: 17, be: 17,
+    bnz: 18, bne: 18,
+    ba: 19, bnbe: 19,
+    bna: 20, bbe: 20,
 
-    'halt': 31
+    push: 21, pop: 22, call: 23, bcall: 23, ret: 24, bret: 24,
+
+    halt: 31
 };
 
-var registers_names = { 'a': 0, 'b': 1, 'ip': 2, 'sp': 3 };
+var registers_names = { a: 0, b: 1, ip: 2, sp: 3 };
 
 function pad_string (string, length, char) {
     var pad = '';
@@ -74,12 +82,8 @@ function parse_param (param, line) {
     }
 
     if (label_regexp.test(param)) {
-        if (labels[param] != undefined) {
-            return { mode: 0, data: labels[param].value };
-        } else {
-            future_labels.push({ label: param, line: line, position: output.length });
-            return { mode: 0, data: 0 };
-        }
+        future_labels.push({ label: param, line: line, position: output.length });
+        return { mode: 0, data: 0 };
     }
 
     if (param.substring(0, 1) == '[') {
@@ -110,12 +114,8 @@ function parse_param (param, line) {
         }
 
         if (label_regexp.test(param)) {
-            if (labels[param] != undefined) {
-                return { mode: 2, data: labels[param].value };
-            } else {
-                future_labels.push({ label: param, line: line, position: output.length });
-                return { mode: 2, data: 0 };
-            }
+            future_labels.push({ label: param, line: line, position: output.length });
+            return { mode: 2, data: 0 };
         }
 
         var calculation = calculate(param);
@@ -240,6 +240,14 @@ function assembler (data) {
                         var param = parse_param(parts[0], i);
                         instruction[0] = opcode | (param.mode + 2);
                         instruction[1] = param.data;
+                    } else if (opcode_text == 'bret') {
+                        var param = parse_param(parts[0], i);
+                        instruction[0] = opcode | (1 << 2) | (param.mode + 2);
+                        instruction[1] = param.data;
+                    } else if (opcode_text.charAt(0) == 'b') {
+                        var param = parse_param(parts[0], i);
+                        instruction[0] = opcode | (1 << 2) | param.mode;
+                        instruction[1] = param.mode == 0 ? ((param.data - 2) & 255) : param.data;
                     } else {
                         var param = parse_param(parts[0], i);
                         instruction[0] = opcode | param.mode;
@@ -279,7 +287,16 @@ function assembler (data) {
 
     for (var i = 0; i < future_labels.length; i++) {
         var position = future_labels[i].position;
-        output[position + 1] = labels[future_labels[i].label].value;
+        var opcode = output[position] >> 3;
+        if (
+            ((opcode >= opcodes.bra && opcode <= opcodes.bna) || opcode == opcodes.bcall) &&
+            ((output[position] >> 2) & 1) == 1 &&
+            (output[position] & 3) == 0
+        ) {
+            output[position + 1] = (labels[future_labels[i].label].value - (position + 2)) & 255;
+        } else {
+            output[position + 1] = labels[future_labels[i].label].value;
+        }
 
         var label = '';
         for (var label_name in labels) {
@@ -292,8 +309,8 @@ function assembler (data) {
             label + '    ' + pad_string((output[position] >> 3).toString(2), 5, '0') + ' ' +
             ((output[position] >> 2) & 1).toString(2) + ' ' +
             pad_string((output[position] & 3).toString(2), 2, '0') + '  ' +
-            pad_string((instruction[1] >> 6).toString(2), 2, '0') + ' ' +
-            pad_string((instruction[1] & 63).toString(2), 6, '0') + ' | ' +
+            pad_string((output[position + 1] >> 6).toString(2), 2, '0') + ' ' +
+            pad_string((output[position + 1] & 63).toString(2), 6, '0') + ' | ' +
             format_byte(output[position]) + ' ' + format_byte(output[position + 1]);
     }
 
@@ -419,7 +436,7 @@ function clock_cycle (auto_clock) {
         }
         if (mode == 1) {
             if (((data_byte >> 5) & 1) == 1) {
-                data = registers[data_byte >> 6] + 0xe0 + (data_byte & 31);
+                data = registers[data_byte >> 6] + (0xe0 | (data_byte & 31));
             } else {
                 data = registers[data_byte >> 6] + (data_byte & 31);
             }
@@ -430,7 +447,7 @@ function clock_cycle (auto_clock) {
         }
         if (mode == 3) {
             if (((data_byte >> 5) & 1) == 1) {
-                address = registers[data_byte >> 6] + 0xe0 + (data_byte & 31);
+                address = registers[data_byte >> 6] + (0xe0 | (data_byte & 31));
             } else {
                 address = registers[data_byte >> 6] + (data_byte & 31);
             }
@@ -458,28 +475,29 @@ function clock_cycle (auto_clock) {
                 }
                 if (address == 0xff) {
                     output_label.value += String.fromCharCode(registers[register] & 127);
+                    output_label.scrollTop = output_label.scrollHeight;
                 }
             }
         }
 
         if (opcode == opcodes.add) {
-            registers[register] += data;
             carry_flag = registers[register] + data > 255;
+            registers[register] += data;
             zero_flag = registers[register] == 0;
         }
         if (opcode == opcodes.adc) {
+            carry_flag = registers[register] + (data + carry_flag) > 255;
             registers[register] += data + carry_flag;
-            carry_flag = registers[register] + data + carry_flag > 255;
             zero_flag = registers[register] == 0;
         }
         if (opcode == opcodes.sub) {
-            registers[register] -= data;
             carry_flag = registers[register] - data < 0;
+            registers[register] -= data;
             zero_flag = registers[register] == 0;
         }
         if (opcode == opcodes.sbb) {
-            registers[register] -= data + carry_flag;
             carry_flag = registers[register] - (data + carry_flag) < 0;
+            registers[register] -= data + carry_flag;
             zero_flag = registers[register] == 0;
         }
         if (opcode == opcodes.cmp) {
@@ -512,26 +530,48 @@ function clock_cycle (auto_clock) {
             zero_flag = registers[register] == 0;
         }
 
-        if (opcode == opcodes.jmp) {
+        if (opcode == opcodes.jmp && register == 0) {
             registers[registers_names.ip] = data;
         }
-        if (opcode == opcodes.jc && carry_flag) {
+        if (opcode == opcodes.jc && register == 0 && carry_flag) {
             registers[registers_names.ip] = data;
         }
-        if (opcode == opcodes.jnc && !carry_flag) {
+        if (opcode == opcodes.jnc && register == 0 && !carry_flag) {
             registers[registers_names.ip] = data;
         }
-        if (opcode == opcodes.jz && zero_flag) {
+        if (opcode == opcodes.jz && register == 0 && zero_flag) {
             registers[registers_names.ip] = data;
         }
-        if (opcode == opcodes.jnz && !zero_flag) {
+        if (opcode == opcodes.jnz && register == 0 && !zero_flag) {
             registers[registers_names.ip] = data;
         }
-        if (opcode == opcodes.ja && !carry_flag && !zero_flag) {
+        if (opcode == opcodes.ja && register == 0 && !carry_flag && !zero_flag) {
             registers[registers_names.ip] = data;
         }
-        if (opcode == opcodes.jna && carry_flag && zero_flag) {
+        if (opcode == opcodes.jna && register == 0 && carry_flag && zero_flag) {
             registers[registers_names.ip] = data;
+        }
+
+        if (opcode == opcodes.bra && register == 1) {
+            registers[registers_names.ip] += data;
+        }
+        if (opcode == opcodes.bc && register == 1 && carry_flag) {
+            registers[registers_names.ip] += data;
+        }
+        if (opcode == opcodes.bnc && register == 1 && !carry_flag) {
+            registers[registers_names.ip] += data;
+        }
+        if (opcode == opcodes.bz && register == 1 && zero_flag) {
+            registers[registers_names.ip] += data;
+        }
+        if (opcode == opcodes.bnz && register == 1 && !zero_flag) {
+            registers[registers_names.ip] += data;
+        }
+        if (opcode == opcodes.ba && register == 1 && !carry_flag && !zero_flag) {
+            registers[registers_names.ip] += data;
+        }
+        if (opcode == opcodes.bna && register == 1 && carry_flag && zero_flag) {
+            registers[registers_names.ip] += data;
         }
 
         if (opcode == opcodes.push) {
@@ -544,15 +584,27 @@ function clock_cycle (auto_clock) {
                 registers[register] = mem[++registers[registers_names.sp]];
             }
         }
-        if (opcode == opcodes.call) {
+        if (opcode == opcodes.call && register == 0) {
             if (mode == 0 || mode == 1) {
                 mem[registers[registers_names.sp]--] = registers[registers_names.ip];
                 registers[registers_names.ip] = data;
             }
         }
-        if (opcode == opcodes.ret) {
+        if (opcode == opcodes.bcall && register == 1) {
+            if (mode == 0 || mode == 1) {
+                mem[registers[registers_names.sp]--] = registers[registers_names.ip];
+                registers[registers_names.ip] += data;
+            }
+        }
+        if (opcode == opcodes.ret && register == 0) {
             if (mode == 2 || mode == 3) {
                 registers[registers_names.ip] = mem[registers[registers_names.sp] + 1];
+                registers[registers_names.sp] += address + 1;
+            }
+        }
+        if (opcode == opcodes.bret && register == 1) {
+            if (mode == 2 || mode == 3) {
+                registers[registers_names.ip] += mem[registers[registers_names.sp] + 1];
                 registers[registers_names.sp] += address + 1;
             }
         }
@@ -748,8 +800,27 @@ x: db 50
 y: db 50
 `,
 `    ; Recursive fibonacci number example
-    push 10
-    call fib
+    mov b, 0
+loop:
+    push b
+    call print_hex
+
+    mov a, '='
+    mov [0xff], a
+
+    push b
+    bcall fib
+
+    push a
+    call print_hex
+
+    mov a, 10
+    mov [0xff], a
+
+    inc b
+
+    cmp b, 13 + 1
+    bne loop
     halt
 
 fib:
@@ -757,19 +828,48 @@ fib:
 
     mov a, [sp + 3]
     cmp a, 2
-    jb fib_done
+    bb fib_done
 
     mov b, a
     push b - 1
-    call fib
+    bcall fib
 
     push b - 2
     mov b, a
-    call fib
+    bcall fib
 
     add a, b
 fib_done:
     pop b
+    ret 1
+
+print_single_hex:
+    mov a, [sp + 2]
+    cmp a, 9
+    ba print_single_hex_alpha
+
+    add a, '0'
+    bra print_single_hex_skip
+
+print_single_hex_alpha:
+    sub a, 10
+    add a, 'a'
+
+print_single_hex_skip:
+    mov [0xff], a
+    ret 1
+
+print_hex:
+    mov a, [sp + 2]
+    shr a, 4
+    push a
+    bcall print_single_hex
+
+    mov a, [sp + 2]
+    and a, 0xf
+    push a
+    bcall print_single_hex
+
     ret 1
 `];
 

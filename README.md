@@ -82,18 +82,28 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 12 = shl = reg <<= data & 7
 13 = shr = reg >>= data & 7
 
-14 = jmp = ip = data
-15 = jc = if (carry) ip = data
-16 = jnc = if (!carry) ip = data
-17 = jz = if (zero) ip = data
-18 = jnz = if (!zero) ip = data
-19 = ja = if (!carry && !zero) ip = data
-20 = jna = if (carry && zero) ip = data
+14 = jmp (reg = 0) = ip = data
+15 = jc (reg = 0) = if (carry) ip = data
+16 = jnc (reg = 0) = if (!carry) ip = data
+17 = jz (reg = 0) = if (zero) ip = data
+18 = jnz (reg = 0) = if (!zero) ip = data
+19 = ja (reg = 0) = if (!carry && !zero) ip = data
+20 = jna (reg = 0) = if (carry && zero) ip = data
+
+14 = bra (reg = 1) = ip += data
+15 = bc (reg = 1) = if (carry) ip += data
+16 = bnc (reg = 1) = if (!carry) ip += data
+17 = bz (reg = 1) = if (zero) ip += data
+18 = bnz (reg = 1) = if (!zero) ip += data
+19 = ba (reg = 1) = if (!carry && !zero) ip += data
+20 = bna (reg = 1) = if (carry && zero) ip += data
 
 21 = push (mode = 0 or mode = 1) = mem[sp--] = data
 22 = pop (mode = 2 or mode = 3) = reg = mem[++sp]
-23 = call (mode = 0 or mode = 1) = mem[sp--] = ip, ip = data
-24 = ret (mode = 2 or mode = 3) = ip = mem[sp + 1], sp += address + 1
+23 = call (reg = 0, mode = 0 or mode = 1) = mem[sp--] = ip, ip = data
+23 = bcall (reg = 1, mode = 0 or mode = 1) = mem[sp--] = ip, ip += data
+24 = ret (reg = 0, mode = 2 or mode = 3) = ip = mem[sp + 1], sp += address + 1
+24 = bret (reg = 1, mode = 2 or mode = 3) = ip += mem[sp + 1], sp += address + 1
 
 25 / 30 = nothing
 
@@ -118,6 +128,17 @@ jne data = jnz data
 
 jnbe data = ja data
 jbe data = jna data
+
+bb data = bc data
+bnae data = bc data
+bnb data = bnc data
+bae data = bnc data
+
+be data = bz data
+bne data = bnz data
+
+bnbe data = ba data
+bbe data = bna data
 ```
 
 ## Memory I/O interface
@@ -150,7 +171,7 @@ I've also some ideas for the second Neva processor:
 - 16-bit address bus (for more memory access)
 - As much as possible compatible at assembler level (for portability)
 - More registers 4, 6 or 8 (for better performance)
-- More flags and jump instructions like: jump if less signed (for more flexibility)
+- More flags and jump / branch instructions like: jump if less signed (for more flexibility)
 - Direct write access to the stack pointer as a register (for more flexibility)
 - Variable instruction length encoding (for smaller code size and better performance)
 
