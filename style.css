@@ -109,6 +109,10 @@ input[type="checkbox"] {
     border: 1px solid #222;
 }
 
+.assembly-scroll {
+    white-space: pre;
+}
+
 .prevent-scrolling {
     white-space: pre;
     overflow: hidden;
