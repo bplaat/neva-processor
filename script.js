@@ -380,7 +380,7 @@ function reset () {
     clock_count = 0;
     halted = false;
     registers[registers_names.ip] = 0;
-    registers[registers_names.sp] = 0xfb;
+    registers[registers_names.sp] = 0xfa;
     step = 0;
     instruction_byte = 0;
     data_byte = 0;
