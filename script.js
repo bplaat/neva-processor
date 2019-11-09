@@ -403,10 +403,45 @@ function reset () {
     update_labels();
 }
 
+function memory_read (address) {
+    if (address == 0xfe) {
+        if (keyboard.value.length > 0) {
+            var c = keyboard.value.charCodeAt(0) & 127;
+            keyboard.value = keyboard.value.substring(1);
+            return c;
+        } else {
+            return 0;
+        }
+    }
+
+    return mem[address];
+}
+
+function memory_write (address, data) {
+    mem[address] = data;
+
+    if (address == 0xfd) {
+        if (data == 0) {
+            points.push({ type: 0, x: mem[0xfb], y: mem[0xfc] });
+        }
+        if (data == 1) {
+            points.push({ type: 1, x: mem[0xfb], y: mem[0xfc] });
+        }
+        if (data == 2) {
+            points = [];
+        }
+    }
+
+    if (address == 0xff) {
+        output_label.value += String.fromCharCode(data & 127);
+        output_label.scrollTop = output_label.scrollHeight;
+    }
+}
+
 function clock_cycle (auto_clock) {
     if (halted) return;
 
-    if (clock_count == 150000 && unending_loop_input.checked) {
+    if (!auto_clock_input.checked && clock_count == 150000 && unending_loop_input.checked) {
         alert('Unending loop detected!');
         halted = true;
     } else {
@@ -415,12 +450,12 @@ function clock_cycle (auto_clock) {
 
     if (step == 0) {
         step++;
-        instruction_byte = mem[registers[registers_names.ip]++];
+        instruction_byte = memory_read(registers[registers_names.ip]++);
     }
 
     else if (step == 1) {
         step++;
-        data_byte = mem[registers[registers_names.ip]++];
+        data_byte = memory_read(registers[registers_names.ip]++);
     }
 
     else if (step == 2) {
@@ -443,7 +478,7 @@ function clock_cycle (auto_clock) {
         }
         if (mode == 2) {
             address = data_byte;
-            data = mem[address];
+            data = memory_read(address);
         }
         if (mode == 3) {
             if (((data_byte >> 5) & 1) == 1) {
@@ -451,7 +486,7 @@ function clock_cycle (auto_clock) {
             } else {
                 address = registers[data_byte >> 6] + (data_byte & 31);
             }
-            data = mem[address];
+            data = memory_read(address);
         }
 
         if (opcode == opcodes.load) {
@@ -460,23 +495,7 @@ function clock_cycle (auto_clock) {
 
         if (opcode == opcodes.store) {
             if (mode == 2 || mode == 3) {
-                mem[address] = registers[register];
-
-                if (address == 0xfe) {
-                    if (registers[register] == 0) {
-                        points.push({ type: 0, x: mem[0xfc], y: mem[0xfd] });
-                    }
-                    if (registers[register] == 1) {
-                        points.push({ type: 1, x: mem[0xfc], y: mem[0xfd] });
-                    }
-                    if (registers[register] == 2) {
-                        points = [];
-                    }
-                }
-                if (address == 0xff) {
-                    output_label.value += String.fromCharCode(registers[register] & 127);
-                    output_label.scrollTop = output_label.scrollHeight;
-                }
+                memory_write(address, registers[register]);
             }
         }
 
@@ -576,35 +595,35 @@ function clock_cycle (auto_clock) {
 
         if (opcode == opcodes.push) {
             if (mode == 0 || mode == 1) {
-                mem[registers[registers_names.sp]--] = data;
+                memory_write(registers[registers_names.sp]--, data);
             }
         }
         if (opcode == opcodes.pop) {
             if (mode == 2 || mode == 3) {
-                registers[register] = mem[++registers[registers_names.sp]];
+                registers[register] = memory_read(++registers[registers_names.sp]);
             }
         }
         if (opcode == opcodes.call && register == 0) {
             if (mode == 0 || mode == 1) {
-                mem[registers[registers_names.sp]--] = registers[registers_names.ip];
+                memory_write(registers[registers_names.sp]--, registers[registers_names.ip]);
                 registers[registers_names.ip] = data;
             }
         }
         if (opcode == opcodes.bcall && register == 1) {
             if (mode == 0 || mode == 1) {
-                mem[registers[registers_names.sp]--] = registers[registers_names.ip];
+                memory_write(registers[registers_names.sp]--, registers[registers_names.ip]);
                 registers[registers_names.ip] += data;
             }
         }
         if (opcode == opcodes.ret && register == 0) {
             if (mode == 2 || mode == 3) {
-                registers[registers_names.ip] = mem[registers[registers_names.sp] + 1];
+                registers[registers_names.ip] = memory_read(registers[registers_names.sp] + 1);
                 registers[registers_names.sp] += address + 1;
             }
         }
         if (opcode == opcodes.bret && register == 1) {
             if (mode == 2 || mode == 3) {
-                registers[registers_names.ip] += mem[registers[registers_names.sp] + 1];
+                registers[registers_names.ip] += memory_read(registers[registers_names.sp] + 1);
                 registers[registers_names.sp] += address + 1;
             }
         }
@@ -662,6 +681,7 @@ function reset_and_assemble () {
 assemble_button.onclick = reset_and_assemble;
 
 function run_program () {
+    auto_clock_input.checked = false;
     if (!zero_memory) {
         while (!halted) {
             clock_cycle(false);
@@ -777,17 +797,17 @@ print_loop:
     mov a, 0
 draw:
     mov b, [x]
-    mov [0xfc], b
+    mov [0xfb], b
     add b, [y]
     mov [x], b
 
     mov b, [y]
-    mov [0xfd], b
+    mov [0xfc], b
     sub b, [x]
     mov [y], b
 
     mov b, 1
-    mov [0xfe], b
+    mov [0xfd], b
 
     cmp a, 6
     je draw_done
@@ -871,6 +891,17 @@ print_hex:
     bcall print_single_hex
 
     ret 1
+`,
+`    ; Simple keyboard interrupt example
+    ; Run is program at 1kHz and not direct!
+
+keyboard_loop:
+    mov a, [0xfe]
+    cmp a, 0
+    be keyboard_loop
+
+    mov [0xff], a
+    bra keyboard_loop
 `];
 
 if (localStorage.assembly != undefined) {

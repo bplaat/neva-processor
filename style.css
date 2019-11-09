@@ -56,8 +56,13 @@ textarea:disabled, .memory_label {
     flex: 1;
 }
 
-.header, .canvas-container {
+.header {
     display: flex;
+}
+
+.canvas-container {
+    display: flex;
+    flex-direction: column;
 }
 
 .header > h1 {
@@ -75,7 +80,12 @@ textarea:disabled, .memory_label {
     align-items: center;
 }
 
-.toolbar, #canvas {
+.toolbar {
+    border: 1px solid #222;
+}
+
+#canvas {
+    width: 256px;
     border: 1px solid #222;
 }
 

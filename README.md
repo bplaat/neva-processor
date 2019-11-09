@@ -40,7 +40,7 @@ The processor has two 8-bit registers: A and B, there is also a instruction and 
 
 -- Not writable and storable
 2 = ip = instruction pointer = 0
-3 = sp = stack pointer = 0xfe or 0xfb
+3 = sp = stack pointer = 0xfd or 0xfa
 
 carry flag = 0
 zero flag = 0
@@ -144,16 +144,15 @@ bbe data = bna data
 ## Memory I/O interface
 All input and output options of the computer are based on memory addresses. So you need to read or write to some specific addresses to communicate with other devices:
 ```
-
+0xfe = Read a ASCII character from the keyboard
 0xff = Write an ASCII character to the terminal display
 
 -- Only in the JavaScript simulator
-0xfc = x position
-0xfd = y position
-0xfe = 0 = move the pen to this position
+0xfb = x position
+0xfc = y position
+0xfd = 0 = move the pen to this position
        1 = line the pen to this position
        2 = clear the screen
-
 ```
 
 ## Online simulator and assembler
