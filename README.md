@@ -150,9 +150,13 @@ All input and output options of the computer are based on memory addresses. So y
 -- Only in the JavaScript simulator
 0xfb = x position
 0xfc = y position
-0xfd = 0 = move the pen to this position
-       1 = line the pen to this position
-       2 = clear the screen
+0xfd = 0 = clear the points
+       1 = render points to the screen
+       2 = move the pen to this position
+       3 = line the pen to this position
+       4 = move the pen to this position relative to the last point
+       5 = line the pen to this position relative to the last point
+
 ```
 
 ## Online simulator and assembler
