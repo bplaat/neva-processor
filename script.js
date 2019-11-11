@@ -261,6 +261,10 @@ function assembler (data) {
                         var param = parse_param(parts[0], i);
                         instruction[0] = opcode | (1 << 2) | (param.mode + 2);
                         instruction[1] = param.data;
+                    } else if (opcode_text == 'bankret') {
+                        var register = registers_names[parts[0].toLowerCase()] << 2;
+                        instruction[0] = opcode | register | 2;
+                        instruction[1] = 0;
                     } else if (((opcode >= opcodes.bra && opcode <= opcodes.bna) || opcode == opcodes.bcall) && opcode_text.charAt(0) == 'b') {
                         var param = parse_param(parts[0], i);
                         instruction[0] = opcode | (1 << 2) | param.mode;
