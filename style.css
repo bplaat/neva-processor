@@ -60,7 +60,7 @@ textarea:disabled, .memory_label {
     display: flex;
 }
 
-.canvas-container {
+.vertical-container {
     display: flex;
     flex-direction: column;
 }

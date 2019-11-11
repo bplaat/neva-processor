@@ -105,7 +105,13 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 24 = ret (reg = 0, mode = 2 or mode = 3) = ip = mem[sp + 1], sp += address + 1
 24 = bret (reg = 1, mode = 2 or mode = 3) = ip += mem[sp + 1], sp += address + 1
 
-25 / 30 = nothing
+-- Only in the JavaScript simulator
+25 = bankjmp = code_bank = reg, ip = data
+26 = bankcall (mode = 0 or mode = 1) = code_bank = reg, mem[sp--] = ip, ip = data
+27 = bankret (mode = 2 or mode = 3) = code_bank = reg, ip = mem[sp + 1], sp += address + 1
+28 = bankset = data_bank = data
+
+29, 30 = nothing
 
 31 = halt
 ```

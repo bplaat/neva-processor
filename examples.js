@@ -162,7 +162,7 @@ print_hex:
     ret 1
 `,
 
-`    ; Simple keyboard interrupt example
+`    ; Simple keyboard example
     ; Don't run this program direct but at 1 kHz!!!
 
 keyboard_loop:
@@ -172,6 +172,34 @@ keyboard_loop:
 
     mov [0xff], a
     bra keyboard_loop
+`,
+
+`    ; Simple memory banking example
+
+    push 3
+    push 4
+    push $$
+    mov a, 8
+    bankcall a, add
+
+    add a, '0'
+    mov [0xff], a
+
+    mov a, 2
+    bankjmp a, halt_program
+
+%bank 8
+
+add:
+    mov a, [sp + 3]
+    add a, [sp + 4]
+    mov b, [sp + 2]
+    bankret b, 2 + 1
+
+%bank 2
+
+halt_program:
+    halt
 `
 
 ];

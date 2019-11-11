@@ -25,10 +25,15 @@ var opcodes = {
 
     push: 21, pop: 22, call: 23, bcall: 23, ret: 24, bret: 24,
 
+    bankjmp: 25, bankcall: 26, bankret: 27, bankset: 28,
+
     halt: 31
 };
 
 var registers_names = { a: 0, b: 1, ip: 2, sp: 3 };
+
+var BANKS_COUNT = 256;
+var BANK_SIZE = 256;
 
 function pad_string (string, length, char) {
     var pad = '';
@@ -48,11 +53,11 @@ function format_boolean (boolean) {
 }
 
 var label_regexp = /^[a-zA-Z_][a-zA-Z0-9_]*$/,
-    output, labels, future_labels;
+    banks, current_bank, labels, future_labels;
 
 function calculate (string) {
     try {
-        return Math.floor(Function('$', '"use strict";return (' + string + ')')(output.length)) & 255;
+        return Math.floor(Function('$', '$$', '"use strict";return (' + string + ')')(banks[current_bank].length, current_bank)) & 255;
     } catch (error) {}
 }
 
@@ -82,7 +87,7 @@ function parse_param (param, line) {
     }
 
     if (label_regexp.test(param)) {
-        future_labels.push({ label: param, line: line, position: output.length });
+        future_labels.push({ label: param, line: line, bank: current_bank, position: banks[current_bank].length });
         return { mode: 0, data: 0 };
     }
 
@@ -114,7 +119,7 @@ function parse_param (param, line) {
         }
 
         if (label_regexp.test(param)) {
-            future_labels.push({ label: param, line: line, position: output.length });
+            future_labels.push({ label: param, line: line, bank: current_bank, position: banks[current_bank].length });
             return { mode: 2, data: 0 };
         }
 
@@ -132,7 +137,11 @@ function parse_param (param, line) {
 }
 
 function assembler (data) {
-    output = [];
+    banks = [];
+    for (var i = 0; i < BANKS_COUNT; i++) {
+        banks.push([]);
+    }
+    current_bank = 0;
     labels = {};
     future_labels = [];
     var binary_lines = [];
@@ -156,8 +165,8 @@ function assembler (data) {
             if (opcode_text.substring(opcode_text.length - 1) == ':') {
                 label = opcode_text.substring(0, opcode_text.length - 1);
                 if (label_regexp.test(label)) {
-                    labels[label] = { line: i, value: output.length };
-                    label += ': ' + format_byte(output.length);
+                    labels[label] = { line: i, value: banks[current_bank].length };
+                    label += ': ' + format_byte(banks[current_bank].length);
                 }
                 if (parts.length > 0) {
                     opcode_text = parts[0].substring(0, parts[0].indexOf(' ')).toLowerCase();
@@ -182,6 +191,14 @@ function assembler (data) {
                 binary_lines.push('    ' + opcode_text + ' equ ' + format_byte(data));
             }
 
+            else if (opcode_text == '%bank') {
+                var calculation = calculate(parts[0]);
+                if (calculation != undefined) {
+                    current_bank = calculation;
+                    binary_lines.push('%bank ' + calculation);
+                }
+            }
+
             else if (opcode_text == 'db') {
                 var bytes = [];
                 for (var j = 0; j < parts.length; j++) {
@@ -189,19 +206,19 @@ function assembler (data) {
                         parts[j] = parts[j].substring(1, parts[j].length - 1);
                         for (var k = 0; k < parts[j].length; k++) {
                             var c = parts[j].charCodeAt(k) & 255;
-                            output.push(c);
+                            banks[current_bank].push(c);
                             bytes.push(format_byte(c));
                         }
                     }
                     else if (!isNaN(parts[j])) {
                         var c = parseInt(parts[j]) & 255;
-                        output.push(c);
+                        banks[current_bank].push(c);
                         bytes.push(format_byte(c));
                     }
                     else {
                         var calculation = calculate(parts[j]);
                         if (calculation != undefined) {
-                            output.push(calculation);
+                            banks[current_bank].push(calculation);
                             bytes.push(format_byte(calculation));
                         }
                     }
@@ -244,7 +261,7 @@ function assembler (data) {
                         var param = parse_param(parts[0], i);
                         instruction[0] = opcode | (1 << 2) | (param.mode + 2);
                         instruction[1] = param.data;
-                    } else if (opcode_text.charAt(0) == 'b') {
+                    } else if (((opcode >= opcodes.bra && opcode <= opcodes.bna) || opcode == opcodes.bcall) && opcode_text.charAt(0) == 'b') {
                         var param = parse_param(parts[0], i);
                         instruction[0] = opcode | (1 << 2) | param.mode;
                         instruction[1] = param.mode == 0 ? ((param.data - 2) & 255) : param.data;
@@ -261,7 +278,12 @@ function assembler (data) {
                         var register = registers_names[parts[1].toLowerCase()] << 2;
                         instruction[0] = (opcodes.store << 3) | register | param.mode;
                         instruction[1] = param.data;
-                    } else {
+                    } else if (opcode_text == 'bankret') {
+                        var register = registers_names[parts[0].toLowerCase()] << 2;
+                        var param = parse_param(parts[1], i);
+                        instruction[0] = opcode | register | (param.mode + 2);
+                        instruction[1] = param.data;
+                    }  else {
                         var register = registers_names[parts[0].toLowerCase()] << 2;
                         var param = parse_param(parts[1], i);
                         instruction[0] = opcode | register | param.mode;
@@ -269,7 +291,7 @@ function assembler (data) {
                     }
                 }
 
-                output.push(instruction[0], instruction[1]);
+                banks[current_bank].push(instruction[0], instruction[1]);
 
                 binary_lines.push(
                     label + '    ' + pad_string((instruction[0] >> 3).toString(2), 5, '0') + ' ' +
@@ -286,16 +308,17 @@ function assembler (data) {
     }
 
     for (var i = 0; i < future_labels.length; i++) {
+        var bank = banks[future_labels[i].bank];
         var position = future_labels[i].position;
-        var opcode = output[position] >> 3;
+        var opcode = bank[position] >> 3;
         if (
             ((opcode >= opcodes.bra && opcode <= opcodes.bna) || opcode == opcodes.bcall) &&
-            ((output[position] >> 2) & 1) == 1 &&
-            (output[position] & 3) == 0
+            ((bank[position] >> 2) & 1) == 1 &&
+            (bank[position] & 3) == 0
         ) {
-            output[position + 1] = (labels[future_labels[i].label].value - (position + 2)) & 255;
+            bank[position + 1] = (labels[future_labels[i].label].value - (position + 2)) & 255;
         } else {
-            output[position + 1] = labels[future_labels[i].label].value;
+            bank[position + 1] = labels[future_labels[i].label].value;
         }
 
         var label = '';
@@ -306,12 +329,12 @@ function assembler (data) {
         }
 
         binary_lines[future_labels[i].line] =
-            label + '    ' + pad_string((output[position] >> 3).toString(2), 5, '0') + ' ' +
-            ((output[position] >> 2) & 1).toString(2) + ' ' +
-            pad_string((output[position] & 3).toString(2), 2, '0') + '  ' +
-            pad_string((output[position + 1] >> 6).toString(2), 2, '0') + ' ' +
-            pad_string((output[position + 1] & 63).toString(2), 6, '0') + ' | ' +
-            format_byte(output[position]) + ' ' + format_byte(output[position + 1]);
+            label + '    ' + pad_string((bank[position] >> 3).toString(2), 5, '0') + ' ' +
+            ((bank[position] >> 2) & 1).toString(2) + ' ' +
+            pad_string((bank[position] & 3).toString(2), 2, '0') + '  ' +
+            pad_string((bank[position + 1] >> 6).toString(2), 2, '0') + ' ' +
+            pad_string((bank[position + 1] & 63).toString(2), 6, '0') + ' | ' +
+            format_byte(bank[position]) + ' ' + format_byte(bank[position + 1]);
     }
 
     binary_label.value = '';
@@ -321,16 +344,24 @@ function assembler (data) {
     }
     binary_label.scrollTop = assembly_input.scrollTop;
 
+    var output = new Uint8Array(BANKS_COUNT * BANK_SIZE);
+    for (var i = 0; i < BANKS_COUNT; i++) {
+        for (var j = 0; j < banks[i].length; j++) {
+            output[i * BANK_SIZE + j] = banks[i][j];
+        }
+    }
     return output;
 }
 
-var mem = new Uint8Array(256), zero_memory,
+var mem = new Uint8Array(BANKS_COUNT * BANK_SIZE), zero_memory, code_bank, data_bank,
     clock_count, halted, step, instruction_byte, data_byte,
     registers = new Uint8Array(4), carry_flag, zero_flag, timeout, clock_freq,
     context = canvas.getContext('2d'), points;
 
 function update_labels () {
     halted_label.textContent = format_boolean(halted);
+    code_bank_label.textContent = format_byte(code_bank);
+    data_bank_label.textContent = format_byte(data_bank);
     step_label.textContent = step;
     instruction_byte_label.textContent = format_byte(instruction_byte);
     data_byte_label.textContent = format_byte(data_byte);
@@ -343,13 +374,13 @@ function update_labels () {
 
     var memory_label_html = '';
     var count = 0;
-    for (var i = 0; i < 256; i++) {
-        if (i == registers[registers_names.ip]) {
-            memory_label_html += '<span class="ip">' + format_byte(mem[i]) + '</span> ';
-        } else if (i == registers[registers_names.sp]) {
-            memory_label_html += '<span class="sp">' + format_byte(mem[i]) + '</span> ';
+    for (var i = 0; i < BANK_SIZE; i++) {
+        if (bank_input.value == code_bank && i == registers[registers_names.ip]) {
+            memory_label_html += '<span class="ip">' + format_byte(mem[(bank_input.value << 8) | i]) + '</span> ';
+        } else if (bank_input.value == data_bank && i == registers[registers_names.sp]) {
+            memory_label_html += '<span class="sp">' + format_byte(mem[(bank_input.value << 8) | i]) + '</span> ';
         } else {
-            memory_label_html += format_byte(mem[i]) + ' ';
+            memory_label_html += format_byte(mem[(bank_input.value << 8) | i]) + ' ';
         }
 
         if (count == 7 && i != 255) {
@@ -379,6 +410,9 @@ function render_vector_lines () {
 }
 
 function reset () {
+    code_bank = 0;
+    data_bank = 0;
+    bank_input.value = code_bank;
     clock_count = 0;
     halted = false;
     registers[registers_names.ip] = 0;
@@ -392,7 +426,7 @@ function reset () {
     zero_flag = false;
 
     zero_memory = true;
-    for (var i = 0; i < 256; i++) {
+    for (var i = 0; i < BANKS_COUNT * BANK_SIZE; i++) {
         mem[i] = 0;
     }
 
@@ -408,13 +442,17 @@ function reset () {
     render_vector_lines();
 }
 
-function memory_read (address) {
-    if (address == 0xfe) {
+function memory_read (address, use_code_bank) {
+    address = ((use_code_bank ? code_bank : data_bank) << 8) | address;
+
+    if (address == 0x00fe) {
         if (keyboard.value.length > 0) {
             var c = keyboard.value.charCodeAt(0) & 127;
             keyboard.value = keyboard.value.substring(1);
+            mem[0x00fe] = c;
             return c;
         } else {
+            mem[0x00fe] = 0;
             return 0;
         }
     }
@@ -423,9 +461,10 @@ function memory_read (address) {
 }
 
 function memory_write (address, data) {
+    address = (data_bank << 8) | address;
     mem[address] = data;
 
-    if (address == 0xfd) {
+    if (address == 0x00fd) {
         var previous_point = points.length > 0 ? points[points.length - 1] : { type: 0, x: 0, y: 0 };
         if (data == 0) {
             points = [];
@@ -434,20 +473,20 @@ function memory_write (address, data) {
             render_vector_lines();
         }
         if (data == 2) {
-            points.push({ type: 0, x: mem[0xfb], y: mem[0xfc] });
+            points.push({ type: 0, x: mem[0x00fb], y: mem[0x00fc] });
         }
         if (data == 3) {
-            points.push({ type: 1, x: mem[0xfb], y: mem[0xfc] });
+            points.push({ type: 1, x: mem[0x00fb], y: mem[0x00fc] });
         }
         if (data == 4) {
-            points.push({ type: 0, x: (previous_point.x + mem[0xfb]) & 255, y: (previous_point.y + mem[0xfc]) & 255 });
+            points.push({ type: 0, x: (previous_point.x + mem[0x00fb]) & 255, y: (previous_point.y + mem[0x00fc]) & 255 });
         }
         if (data == 5) {
-            points.push({ type: 1, x: (previous_point.x + mem[0xfb]) & 255, y: (previous_point.y + mem[0xfc]) & 255 });
+            points.push({ type: 1, x: (previous_point.x + mem[0x00fb]) & 255, y: (previous_point.y + mem[0x00fc]) & 255 });
         }
     }
 
-    if (address == 0xff) {
+    if (address == 0x00ff) {
         output_label.value += String.fromCharCode(data & 127);
         output_label.scrollTop = output_label.scrollHeight;
     }
@@ -465,12 +504,12 @@ function clock_cycle (auto_clock) {
 
     if (step == 0) {
         step++;
-        instruction_byte = memory_read(registers[registers_names.ip]++);
+        instruction_byte = memory_read(registers[registers_names.ip]++, true);
     }
 
     else if (step == 1) {
         step++;
-        data_byte = memory_read(registers[registers_names.ip]++);
+        data_byte = memory_read(registers[registers_names.ip]++, true);
     }
 
     else if (step == 2) {
@@ -643,6 +682,31 @@ function clock_cycle (auto_clock) {
             }
         }
 
+        if (opcode == opcodes.bankjmp) {
+            code_bank = registers[register];
+            bank_input.value = code_bank;
+            registers[registers_names.ip] = data;
+        }
+        if (opcode == opcodes.bankcall) {
+            if (mode == 0 || mode == 1) {
+                code_bank = registers[register];
+                bank_input.value = code_bank;
+                memory_write(registers[registers_names.sp]--, registers[registers_names.ip]);
+                registers[registers_names.ip] = data;
+            }
+        }
+        if (opcode == opcodes.bankret) {
+            if (mode == 2 || mode == 3) {
+                code_bank = registers[register];
+                bank_input.value = code_bank;
+                registers[registers_names.ip] = memory_read(registers[registers_names.sp] + 1);
+                registers[registers_names.sp] += address + 1;
+            }
+        }
+        if (opcode == opcodes.bankset) {
+            data_bank = data;
+        }
+
         if (opcode == opcodes.halt) {
             halted = true;
         }
@@ -716,7 +780,7 @@ download_bin_button.onclick = function () {
     var output = reset_and_assemble();
 
     var file_dump = 'v2.0 raw\n';
-    for (var i = 0; i < output.length; i++) {
+    for (var i = 0; i < BANK_SIZE; i++) {
         file_dump += format_byte(output[i]) + '\n';
     }
 
@@ -791,6 +855,18 @@ document.onkeydown = function (event) {
     if (event.keyCode == 83 && (navigator.platform.match('Mac') ? event.metaKey : event.ctrlKey)) {
         event.preventDefault();
     }
+};
+
+for (var i = 0; i < BANKS_COUNT; i++) {
+    var option = document.createElement('option');
+    option.value = i;
+    option.textContent = 'Bank ' + i;
+    bank_input.appendChild(option);
+}
+
+bank_input.onchange = function () {
+    update_labels();
+    memory_label.scrollTop = 0;
 };
 
 reset();
