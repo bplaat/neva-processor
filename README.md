@@ -61,92 +61,84 @@ Like I sad each instruction has two bits that select a mode which the instructio
 
 ## Instructions
 Because we use five bits for the instruction opcode there is room for 32 different instructions:
-```
-0 = nop
-
-1 = load = reg = data
-2 = store (mode = 2 or mode = 3) = mem[address] = reg
-
--- effects carray flag and zero flag
-3 = add = reg += data
-4 = adc = reg += data + carry
-5 = sub = reg -= data
-6 = sbb = reg -= data + carry
-7 = cmp = reg - data (set only flags)
-
--- effects zero flag
-8 = and = reg &= data
-9 = or = reg |= data
-10 = xor = reg ^= data
-11 = not = reg = ~data
-12 = shl = reg <<= data & 7
-13 = shr = reg >>= data & 7
-
-14 = jmp (reg = 0) = ip = data
-15 = jc (reg = 0) = if (carry) ip = data
-16 = jnc (reg = 0) = if (!carry) ip = data
-17 = jz (reg = 0) = if (zero) ip = data
-18 = jnz (reg = 0) = if (!zero) ip = data
-19 = ja (reg = 0) = if (!carry && !zero) ip = data
-20 = jna (reg = 0) = if (carry || zero) ip = data
-
-14 = bra (reg = 1) = ip += data
-15 = bc (reg = 1) = if (carry) ip += data
-16 = bnc (reg = 1) = if (!carry) ip += data
-17 = bz (reg = 1) = if (zero) ip += data
-18 = bnz (reg = 1) = if (!zero) ip += data
-19 = ba (reg = 1) = if (!carry && !zero) ip += data
-20 = bna (reg = 1) = if (carry || zero) ip += data
-
-21 = push (mode = 0 or mode = 1) = mem[sp--] = data
-22 = pop (mode = 2 or mode = 3) = reg = mem[++sp]
-23 = call (reg = 0, mode = 0 or mode = 1) = mem[sp--] = ip, ip = data
-23 = bcall (reg = 1, mode = 0 or mode = 1) = mem[sp--] = ip, ip += data
-24 = ret (reg = 0, mode = 2 or mode = 3) = ip = mem[sp + 1], sp += address + 1
-24 = bret (reg = 1, mode = 2 or mode = 3) = ip += mem[sp + 1], sp += address + 1
-
--- Only in the JavaScript simulator
-25 = bankjmp = code_bank = reg, ip = data
-26 = bankcall (mode = 0 or mode = 1) = code_bank = reg, mem[sp--] = ip, ip = data
-27 = bankret (mode = 2 or mode = 3) = code_bank = reg, ip = mem[sp + 1], sp += address + 1
-28 = bankdata = data_bank = data
-29 = bankstack = stack_bank = data
-
-30 = nothing
-
-31 = halt
-```
+| #  | Name     | Meaning              | Special encoding       | Operation                                            |
+|----|----------|----------------------|------------------------|------------------------------------------------------|
+| 0  | nop      | no operation         |                        | -                                                    |
+|    |          |                      |                        |                                                      |
+| 1  | load     | load something       |                        | reg = data                                           |
+| 2  | store    | store something      | mode = 2 or 3          | mem[address] = reg                                   |
+|    |          |                      |                        |                                                      |
+| 3  | add      | add                  |                        | reg += data                                          |
+| 4  | adc      | add with carry       |                        | reg += data + carry                                  |
+| 5  | sub      | subtract             |                        | reg -= data                                          |
+| 6  | sbb      | subtract with borrow |                        | reg -= data + carry                                  |
+| 7  | cmp      | compare              |                        | reg - data (set only flags)                          |
+|    |          |                      |                        |                                                      |
+| 8  | and      | and                  |                        | reg &= data                                          |
+| 9  | or       | or                   |                        | reg |= data                                          |
+| 10 | xor      | xor                  |                        | reg ^= data                                          |
+| 11 | not      | not                  |                        | reg = ~data                                          |
+| 12 | shl      | shift lift           |                        | reg <<= data & 7                                     |
+| 13 | shr      | shift right          |                        | reg >>= data & 7                                     |
+|    |          |                      |                        |                                                      |
+| 14 | jmp      | jump                 | reg = 0                | ip = data                                            |
+| 15 | jc       | jump if carry        | reg = 0                | if (carry) ip = data                                 |
+| 16 | jnc      | jump if not carry    | reg = 0                | if (!carry) ip = data                                |
+| 17 | jz       | jump if zero         | reg = 0                | if (zero) ip = data                                  |
+| 18 | jnz      | jump if not zero     | reg = 0                | if (!zero) ip = data                                 |
+| 19 | ja       | jump if above        | reg = 0                | if (!carray && !zero) ip = data                      |
+| 20 | jna      | jump if not above    | reg = 0                | if (carry || zero) ip = data                         |
+|    |          |                      |                        |                                                      |
+| 14 | bra      | branch               | reg = 1                | ip += data                                           |
+| 15 | bc       | branch if carry      | reg = 1                | if (carry) ip += data                                |
+| 16 | bnc      | branch if not carry  | reg = 1                | if (!carry) ip += data                               |
+| 17 | bz       | branch if zero       | reg = 1                | if (zero) ip += data                                 |
+| 18 | bnz      | branch if not zero   | reg = 1                | if (!zero) ip += data                                |
+| 19 | ba       | branch if above      | reg = 1                | if (!carray && !zero) ip += data                     |
+| 20 | bna      | branch if not above  | reg = 1                | if (carry || zero) ip += data                        |
+|    |          |                      |                        |                                                      |
+| 21 | push     | push something       | mode = 0 or 1          | mem[sp--] = data                                     |
+| 22 | pop      | pop something        | mode = 2 or 3          | reg = mem[++sp]                                      |
+| 23 | call     | call                 | reg = 0, mode = 0 or 1 | mem[sp--] = ip, ip = data                            |
+| 24 | ret      | return               | reg = 0, mode = 2 or 3 | ip = mem[sp + 1], sp += address + 1                  |
+| 23 | bcall    | branch call          | reg = 1, mode = 0 or 1 | mem[sp--] = ip, ip += data                           |
+| 24 | bret     | branch return        | reg = 1, mode = 2 or 3 | ip += mem[sp + 1], sp += address + 1                 |
+| 25 | ssp      | set stack pointer    |                        | sp = data                                            |
+|    |          |                      |                        |                                                      |
+| 26 | bankjmp  | bank jump            |                        | code_bank = reg, ip = data                           |
+| 27 | bankcall | bank call            | mode = 0 or 1          | code_bank = reg, mem[sp--] = ip, ip = data           |
+| 28 | bankret  | bank return          | mode = 2 or 3          | code_bank = reg, ip = mem[sp + 1], sp += address + 1 |
+| 29 | sdb      | set data bank        |                        | data_bank = data                                     |
+| 30 | ssb      | set stack bank       |                        | stack_bank = data                                    |
+|    |          |                      |                        |                                                      |
+| 31 | halt     | halt processor       |                        | stops the processor                                  |
 
 There are also some pseudo instructions which the assembler translates to other instructions:
-```
-mov reg, data = load reg, data
-mov [data], reg = store reg, [data]
-
-inc reg = add reg, 1
-dec reg = sub reg, 1
-
-jb data = jc data
-jnae data = jc data
-jnb data = jnc data
-jae data = jnc data
-
-je data = jz data
-jne data = jnz data
-
-jnbe data = ja data
-jbe data = jna data
-
-bb data = bc data
-bnae data = bc data
-bnb data = bnc data
-bae data = bnc data
-
-be data = bz data
-bne data = bnz data
-
-bnbe data = ba data
-bbe data = bna data
-```
+| Name | Meaning                      | Example         | Translation       |
+|------|------------------------------|-----------------|-------------------|
+| mov  | move something in register   | mov reg, data   | load reg, data    |
+| mov  | move something to memory     | mov [data], reg | store reg, [data] |
+|      |                              |                 |                   |
+| inc  | increment register           | inc reg         | add reg, 1        |
+| dec  | decrement register           | dec reg         | sub reg, 1        |
+|      |                              |                 |                   |
+| jb   | jump if below                | jb data         | jc data           |
+| jnae | jump if not above or equel   | jnae data       | jc data           |
+| jnb  | jump if not below            | jnb data        | jnc data          |
+| jae  | jump if above or equel       | jae data        | jnc data          |
+| je   | jump if equel                | je data         | jz data           |
+| jne  | jump if not equel            | jne data        | jnz data          |
+| jnbe | jump if not below or equel   | jnbe data       | ja data           |
+| jbe  | jump if below or equel       | jbe data        | jna data          |
+|      |                              |                 |                   |
+| bb   | branch if equel              | bb data         | bc data           |
+| bnae | branch if not above or equel | bnae data       | bc data           |
+| bnb  | branch if not below          | bnb data        | bnc data          |
+| bae  | branch if above or equel     | bae data        | bnc data          |
+| be   | branch if equel              | be data         | bz data           |
+| bne  | branch if not equel          | bne data        | bnz data          |
+| bnbe | branch if not below or equel | bnbe data       | ba data           |
+| bbe  | branch below or equel        | bbe data        | bna data          |
 
 ## Memory Banking
 Originally, the Neva processor only had an 8-bit address bus. After a while I discovered that this was a little too little for larger programs such as: the game pong. So I opted to add a simple banking system.
