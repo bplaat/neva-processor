@@ -147,6 +147,13 @@ bnbe data = ba data
 bbe data = bna data
 ```
 
+## Memory Banking
+Originally, the Neva processor only had an 8-bit address bus. After a while I discovered that this was a little too little for larger programs such as: the game pong. So I opted to add a simple banking system.
+
+The banking system works as follows: there are two bank registers, the code and the data bank. The code bank works as the higher byte of the instruction fetch and the data bank works as the higher byte of all other address functions including the stack. You can adjust these bank registers with certain bank instructions.
+
+I have chosen to split these two bank registers as this gives the possibility to use for example a data bank and different code banks or to use a code bank and different data banks. Banks are so far only supported in the JavaScript simulator. Thanks to this banking system, the Neva processor now has a 16-bit address bus and can now use 2 ^ 16 = 65536 bytes of memory!
+
 ## Memory I/O interface
 All input and output options of the computer are based on memory addresses. So you need to read or write to some specific addresses to communicate with other devices:
 ```
@@ -177,7 +184,7 @@ The file `asm.js` contains a simple assembler written in JavaScript, you need [N
 ## Ideas for the Neva II Processor
 I've also some ideas for the second Neva processor:
 
-- 16-bit address bus (for more memory access)
+- A better 16-bit or 24-bit address bus (for more memory access)
 - As much as possible compatible at assembler level (for portability)
 - More registers 4, 6 or 8 (for better performance)
 - More flags and jump / branch instructions like: jump if less signed (for more flexibility)
