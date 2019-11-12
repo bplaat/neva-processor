@@ -61,6 +61,7 @@ Like I sad each instruction has two bits that select a mode which the instructio
 
 ## Instructions
 Because we use five bits for the instruction opcode there is room for 32 different instructions:
+
 | #  | Name     | Meaning              | Special encoding       | Operation                                            |
 |----|----------|----------------------|------------------------|------------------------------------------------------|
 | 0  | nop      | no operation         |                        | -                                                    |
@@ -114,6 +115,7 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 | 31 | halt     | halt processor       |                        | stops the processor                                  |
 
 There are also some pseudo instructions which the assembler translates to other instructions:
+
 | Name | Meaning                      | Example         | Translation       |
 |------|------------------------------|-----------------|-------------------|
 | mov  | move something in register   | mov reg, data   | load reg, data    |
