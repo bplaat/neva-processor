@@ -417,6 +417,7 @@ function reset () {
     code_bank = 0;
     data_bank = 0;
     bank_input.value = code_bank;
+    memory_label.scrollTop = 0;
     clock_count = 0;
     halted = false;
     registers[registers_names.ip] = 0;
@@ -689,12 +690,14 @@ function clock_cycle (auto_clock) {
         if (opcode == opcodes.bankjmp) {
             code_bank = registers[register];
             bank_input.value = code_bank;
+            memory_label.scrollTop = 0;
             registers[registers_names.ip] = data;
         }
         if (opcode == opcodes.bankcall) {
             if (mode == 0 || mode == 1) {
                 code_bank = registers[register];
                 bank_input.value = code_bank;
+                memory_label.scrollTop = 0;
                 memory_write(registers[registers_names.sp]--, registers[registers_names.ip]);
                 registers[registers_names.ip] = data;
             }
@@ -703,6 +706,7 @@ function clock_cycle (auto_clock) {
             if (mode == 2 || mode == 3) {
                 code_bank = registers[register];
                 bank_input.value = code_bank;
+                memory_label.scrollTop = 0;
                 registers[registers_names.ip] = memory_read(registers[registers_names.sp] + 1);
                 registers[registers_names.sp] += address + 1;
             }
