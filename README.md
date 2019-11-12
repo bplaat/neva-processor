@@ -109,9 +109,10 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 25 = bankjmp = code_bank = reg, ip = data
 26 = bankcall (mode = 0 or mode = 1) = code_bank = reg, mem[sp--] = ip, ip = data
 27 = bankret (mode = 2 or mode = 3) = code_bank = reg, ip = mem[sp + 1], sp += address + 1
-28 = bankset = data_bank = data
+28 = bankdata = data_bank = data
+29 = bankstack = stack_bank = data
 
-29, 30 = nothing
+30 = nothing
 
 31 = halt
 ```
@@ -150,25 +151,28 @@ bbe data = bna data
 ## Memory Banking
 Originally, the Neva processor only had an 8-bit address bus. After a while I discovered that this was a little too little for larger programs such as: the game pong. So I opted to add a simple banking system.
 
-The banking system works as follows: there are two bank registers, the code and the data bank. The code bank works as the higher byte of the instruction fetch and the data bank works as the higher byte of all other address functions including the stack. You can adjust these bank registers with certain bank instructions.
+The banking system works as follows: there are three bank registers, the code, the data and the stack bank and you can adjust these bank registers with certain bank instructions:
+- The code bank works as the higher byte of the instruction fetch cycle.
+- The data bank works as the higher byte of the load and store instructions.
+- The stack bank works as the higher byte of stack instructions.
 
-I have chosen to split these two bank registers as this gives the possibility to use for example a data bank and different code banks or to use a code bank and different data banks. Banks are so far only supported in the JavaScript simulator. Thanks to this banking system, the Neva processor now has a 16-bit address bus and can now use 2 ^ 16 = 65536 bytes of memory!
+I have chosen to split these three bank registers as this gives the possibility to use for example a data bank and different code banks or to use a code bank and different data banks. Banks are so far only supported in the JavaScript simulator. Thanks to this banking system, the Neva processor now has a 16-bit address bus and can now use 2 ^ 16 = 65536 bytes of memory!
 
 ## Memory I/O interface
 All input and output options of the computer are based on memory addresses. So you need to read or write to some specific addresses to communicate with other devices:
 ```
-0xfe = Read a ASCII character from the keyboard
-0xff = Write an ASCII character to the terminal display
+0x00fe = Read a ASCII character from the keyboard
+0x00ff = Write an ASCII character to the terminal display
 
 -- Only in the JavaScript simulator
-0xfb = x position
-0xfc = y position
-0xfd = 0 = clear the points
-       1 = render points to the screen
-       2 = move the pen to this position
-       3 = line the pen to this position
-       4 = move the pen to this position relative to the last point
-       5 = line the pen to this position relative to the last point
+0x00fb = x position
+0x00fc = y position
+0x00fd = 0 = clear the points
+         1 = render points to the screen
+         2 = move the pen to this position
+         3 = line the pen to this position
+         4 = move the pen to this position relative to the last point
+         5 = line the pen to this position relative to the last point
 
 ```
 

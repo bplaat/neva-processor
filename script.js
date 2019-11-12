@@ -25,7 +25,7 @@ var opcodes = {
 
     push: 21, pop: 22, call: 23, bcall: 23, ret: 24, bret: 24,
 
-    bankjmp: 25, bankcall: 26, bankret: 27, bankset: 28,
+    bankjmp: 25, bankcall: 26, bankret: 27, bankdata: 28, bankstack: 28,
 
     halt: 31
 };
@@ -357,8 +357,8 @@ function assembler (data) {
     return output;
 }
 
-var mem = new Uint8Array(BANKS_COUNT * BANK_SIZE), zero_memory, code_bank, data_bank,
-    clock_count, halted, step, instruction_byte, data_byte,
+var mem = new Uint8Array(BANKS_COUNT * BANK_SIZE), zero_memory, clock_count, halted,
+    code_bank, data_bank, stack_bank, step, instruction_byte, data_byte,
     registers = new Uint8Array(4), carry_flag, zero_flag, timeout, clock_freq,
     context = canvas.getContext('2d'), points;
 
@@ -366,6 +366,7 @@ function update_labels () {
     halted_label.textContent = format_boolean(halted);
     code_bank_label.textContent = format_byte(code_bank);
     data_bank_label.textContent = format_byte(data_bank);
+    stack_bank_label.textContent = format_byte(stack_bank);
     step_label.textContent = step;
     instruction_byte_label.textContent = format_byte(instruction_byte);
     data_byte_label.textContent = format_byte(data_byte);
@@ -381,7 +382,7 @@ function update_labels () {
     for (var i = 0; i < BANK_SIZE; i++) {
         if (bank_input.value == code_bank && i == registers[registers_names.ip]) {
             memory_label_html += '<span class="ip">' + format_byte(mem[(bank_input.value << 8) | i]) + '</span> ';
-        } else if (bank_input.value == data_bank && i == registers[registers_names.sp]) {
+        } else if (bank_input.value == stack_bank && i == registers[registers_names.sp]) {
             memory_label_html += '<span class="sp">' + format_byte(mem[(bank_input.value << 8) | i]) + '</span> ';
         } else {
             memory_label_html += format_byte(mem[(bank_input.value << 8) | i]) + ' ';
@@ -415,8 +416,9 @@ function render_vector_lines () {
 
 function reset () {
     code_bank = 0;
-    data_bank = 0;
     bank_input.value = code_bank;
+    data_bank = 0;
+    stack_bank = 0;
     memory_label.scrollTop = 0;
     clock_count = 0;
     halted = false;
@@ -447,8 +449,8 @@ function reset () {
     render_vector_lines();
 }
 
-function memory_read (address, use_code_bank) {
-    address = ((use_code_bank ? code_bank : data_bank) << 8) | address;
+function memory_read (bank, address) {
+    address = (bank << 8) | address;
 
     if (address == 0x00fe) {
         if (keyboard.value.length > 0) {
@@ -465,8 +467,8 @@ function memory_read (address, use_code_bank) {
     return mem[address];
 }
 
-function memory_write (address, data) {
-    address = (data_bank << 8) | address;
+function memory_write (bank, address, data) {
+    address = (bank << 8) | address;
     mem[address] = data;
 
     if (address == 0x00fd) {
@@ -509,12 +511,12 @@ function clock_cycle (auto_clock) {
 
     if (step == 0) {
         step++;
-        instruction_byte = memory_read(registers[registers_names.ip]++, true);
+        instruction_byte = memory_read(code_bank, registers[registers_names.ip]++);
     }
 
     else if (step == 1) {
         step++;
-        data_byte = memory_read(registers[registers_names.ip]++, true);
+        data_byte = memory_read(code_bank, registers[registers_names.ip]++);
     }
 
     else if (step == 2) {
@@ -537,7 +539,7 @@ function clock_cycle (auto_clock) {
         }
         if (mode == 2) {
             address = data_byte;
-            data = memory_read(address);
+            data = memory_read(data_bank, address);
         }
         if (mode == 3) {
             if (((data_byte >> 5) & 1) == 1) {
@@ -545,7 +547,7 @@ function clock_cycle (auto_clock) {
             } else {
                 address = registers[data_byte >> 6] + (data_byte & 31);
             }
-            data = memory_read(address);
+            data = memory_read(data_bank, address);
         }
 
         if (opcode == opcodes.load) {
@@ -554,7 +556,7 @@ function clock_cycle (auto_clock) {
 
         if (opcode == opcodes.store) {
             if (mode == 2 || mode == 3) {
-                memory_write(address, registers[register]);
+                memory_write(data_bank, address, registers[register]);
             }
         }
 
@@ -654,35 +656,35 @@ function clock_cycle (auto_clock) {
 
         if (opcode == opcodes.push) {
             if (mode == 0 || mode == 1) {
-                memory_write(registers[registers_names.sp]--, data);
+                memory_write(stack_bank, registers[registers_names.sp]--, data);
             }
         }
         if (opcode == opcodes.pop) {
             if (mode == 2 || mode == 3) {
-                registers[register] = memory_read(++registers[registers_names.sp]);
+                registers[register] = memory_read(stack_bank, ++registers[registers_names.sp]);
             }
         }
         if (opcode == opcodes.call && register == 0) {
             if (mode == 0 || mode == 1) {
-                memory_write(registers[registers_names.sp]--, registers[registers_names.ip]);
+                memory_write(stack_bank, registers[registers_names.sp]--, registers[registers_names.ip]);
                 registers[registers_names.ip] = data;
             }
         }
         if (opcode == opcodes.bcall && register == 1) {
             if (mode == 0 || mode == 1) {
-                memory_write(registers[registers_names.sp]--, registers[registers_names.ip]);
+                memory_write(stack_bank, registers[registers_names.sp]--, registers[registers_names.ip]);
                 registers[registers_names.ip] += data;
             }
         }
         if (opcode == opcodes.ret && register == 0) {
             if (mode == 2 || mode == 3) {
-                registers[registers_names.ip] = memory_read(registers[registers_names.sp] + 1);
+                registers[registers_names.ip] = memory_read(stack_bank, registers[registers_names.sp] + 1);
                 registers[registers_names.sp] += address + 1;
             }
         }
         if (opcode == opcodes.bret && register == 1) {
             if (mode == 2 || mode == 3) {
-                registers[registers_names.ip] += memory_read(registers[registers_names.sp] + 1);
+                registers[registers_names.ip] += memory_read(stack_bank, registers[registers_names.sp] + 1);
                 registers[registers_names.sp] += address + 1;
             }
         }
@@ -698,7 +700,7 @@ function clock_cycle (auto_clock) {
                 code_bank = registers[register];
                 bank_input.value = code_bank;
                 memory_label.scrollTop = 0;
-                memory_write(registers[registers_names.sp]--, registers[registers_names.ip]);
+                memory_write(stack_bank, registers[registers_names.sp]--, registers[registers_names.ip]);
                 registers[registers_names.ip] = data;
             }
         }
@@ -707,12 +709,15 @@ function clock_cycle (auto_clock) {
                 code_bank = registers[register];
                 bank_input.value = code_bank;
                 memory_label.scrollTop = 0;
-                registers[registers_names.ip] = memory_read(registers[registers_names.sp] + 1);
+                registers[registers_names.ip] = memory_read(stack_bank, registers[registers_names.sp] + 1);
                 registers[registers_names.sp] += address + 1;
             }
         }
-        if (opcode == opcodes.bankset) {
+        if (opcode == opcodes.bankdata) {
             data_bank = data;
+        }
+        if (opcode == opcodes.bankstack) {
+            stack_bank = data;
         }
 
         if (opcode == opcodes.halt) {

@@ -208,8 +208,8 @@ halt_program:
 
     ; # Controls
     ; DONT HOLD THE BUTTONS BUT PRESS IT REPEATEDLY!!!
-    ; Player 1: 'w' move paddle up, 's' move paddle down
-    ; Player 2: 'o' move paddle up, 'l' move paddle down
+    ; Left player: 'w' move paddle up, 's' move paddle down
+    ; Right player: 'o' move paddle up, 'l' move paddle down
 
     ; # Banks
     ; 0 = main loop, data, stack
