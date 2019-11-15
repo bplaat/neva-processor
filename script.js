@@ -61,7 +61,11 @@ function calculate (string) {
     } catch (error) {}
 }
 
-function parse_param (param, line) {
+function parse_param (param, line, stop_early_labels) {
+    if (stop_early_labels == undefined) {
+        stop_early_labels = false;
+    }
+
     if (!isNaN(param)) {
         return { mode: 0, data: parseInt(param) & 255 };
     }
@@ -87,8 +91,12 @@ function parse_param (param, line) {
     }
 
     if (label_regexp.test(param)) {
-        future_labels.push({ label: param, line: line, bank: current_bank, position: banks[current_bank].length });
-        return { mode: 0, data: 0 };
+        if (stop_early_labels || labels[param] == undefined) {
+            future_labels.push({ label: param, line: line, bank: current_bank, position: banks[current_bank].length });
+            return { mode: 0, data: 0 };
+        } else {
+            return { mode: 0, data: labels[param].value };
+        }
     }
 
     if (param.substring(0, 1) == '[') {
@@ -119,8 +127,12 @@ function parse_param (param, line) {
         }
 
         if (label_regexp.test(param)) {
-            future_labels.push({ label: param, line: line, bank: current_bank, position: banks[current_bank].length });
-            return { mode: 2, data: 0 };
+            if (stop_early_labels || labels[param] == undefined) {
+                future_labels.push({ label: param, line: line, bank: current_bank, position: banks[current_bank].length });
+                return { mode: 2, data: 0 };
+            } else {
+                return { mode: 2, data: labels[param].value };
+            }
         }
 
         var calculation = calculate(param);
@@ -150,10 +162,12 @@ function assembler (data) {
         var line = lines[i].replace(/;.*/, '').trim();
         if (line != '') {
             var parts = line.split(',');
-            var opcode_text = parts[0].substring(0, parts[0].indexOf(' ')).toLowerCase();
+            var label_name = parts[0].substring(0, parts[0].indexOf(' ')),
+                opcode_text = label_name.toLowerCase();
             parts[0] = parts[0].substring(parts[0].indexOf(' '));
             if (opcode_text == '') {
-                opcode_text = parts[0].toLowerCase();
+                label_name = parts[0];
+                opcode_text = label_name.toLowerCase();
                 parts = [];
             } else {
                 for (var j = 0; j < parts.length; j++) {
@@ -162,17 +176,20 @@ function assembler (data) {
             }
 
             var label = '';
-            if (opcode_text.substring(opcode_text.length - 1) == ':') {
-                label = opcode_text.substring(0, opcode_text.length - 1);
+            if (label_name.substring(label_name.length - 1) == ':') {
+                label = label_name.substring(0, label_name.length - 1);
                 if (label_regexp.test(label)) {
                     labels[label] = { line: i, value: banks[current_bank].length };
                     label += ': ' + format_byte(banks[current_bank].length);
                 }
+
                 if (parts.length > 0) {
-                    opcode_text = parts[0].substring(0, parts[0].indexOf(' ')).toLowerCase();
+                    label_name = parts[0].substring(0, parts[0].indexOf(' '));
+                    opcode_text = label_name.toLowerCase();
                     parts[0] = parts[0].substring(parts[0].indexOf(' '));
-                    if (opcode_text == '') {
-                        opcode_text = parts[0].toLowerCase();
+                    if (label_name == '') {
+                        label_name = parts[0];
+                        opcode_text = label_name.toLowerCase();
                         parts = [];
                     } else {
                         for (var j = 0; j < parts.length; j++) {
@@ -187,16 +204,14 @@ function assembler (data) {
 
             if (parts[0] != undefined && parts[0].substring(0, parts[0].indexOf(' ')) == 'equ') {
                 var data = parse_param(parts[0].substring(parts[0].indexOf(' ')).trim(), i).data;
-                labels[opcode_text] = { line: i, value: data };
-                binary_lines.push('    ' + opcode_text + ' equ ' + format_byte(data));
+                labels[label_name] = { line: i, value: data };
+                binary_lines.push('    ' + label_name + ' equ ' + format_byte(data));
             }
 
             else if (opcode_text == '%bank') {
-                var calculation = calculate(parts[0]);
-                if (calculation != undefined) {
-                    current_bank = calculation;
-                    binary_lines.push('%bank ' + calculation);
-                }
+                var data = parse_param(parts[0], i).data;
+                current_bank = data;
+                binary_lines.push('%bank ' + format_byte(data));
             }
 
             else if (opcode_text == 'db') {
@@ -266,7 +281,7 @@ function assembler (data) {
                         instruction[0] = opcode | register | 2;
                         instruction[1] = 0;
                     } else if (((opcode >= opcodes.bra && opcode <= opcodes.bna) || opcode == opcodes.bcall) && opcode_text.charAt(0) == 'b') {
-                        var param = parse_param(parts[0], i);
+                        var param = parse_param(parts[0], i, true);
                         instruction[0] = opcode | (1 << 2) | param.mode;
                         instruction[1] = param.mode == 0 ? ((param.data - 2) & 255) : param.data;
                     } else {
