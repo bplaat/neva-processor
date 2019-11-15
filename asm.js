@@ -129,7 +129,7 @@ function parse_param (param, line, stop_early_labels) {
             return { mode: 0, data: calculation };
         }
     }
-    console.log('Error on line: ' + line);
+    console.log('Error on line: ' + (line + 1) + '\nCan\'t parse parameter!');
 }
 
 output = [];
@@ -190,15 +190,9 @@ for (var i = 0; i < lines.length; i++) {
                     for (var k = 0; k < parts[j].length; k++) {
                         output.push(parts[j].charCodeAt(k) & 255);
                     }
-                }
-                else if (!isNaN(parts[j])) {
-                    output.push(parseInt(parts[j]) & 255);
-                }
-                else {
-                    var calculation = calculate(parts[j]);
-                    if (calculation != undefined) {
-                        output.push(calculation);
-                    }
+                } else {
+                    var data = parse_param(parts[j], i).data;
+                    output.push(data);
                 }
             }
         }
@@ -269,16 +263,21 @@ for (var i = 0; i < lines.length; i++) {
 }
 
 for (var i = 0; i < future_labels.length; i++) {
-    var position = future_labels[i].position;
-    var opcode = output[position] >> 3;
-    if (
-        ((opcode >= opcodes.bra && opcode <= opcodes.bna) || opcode == opcodes.bcall) &&
-        ((output[position] >> 2) & 1) == 1 &&
-        (output[position] & 3) == 0
-    ) {
-        output[position + 1] = (labels[future_labels[i].label].value - (position + 2)) & 255;
+    var label = labels[future_labels[i].label];
+    if (label != undefined) {
+        var position = future_labels[i].position;
+        var opcode = output[position] >> 3;
+        if (
+            ((opcode >= opcodes.bra && opcode <= opcodes.bna) || opcode == opcodes.bcall) &&
+            ((output[position] >> 2) & 1) == 1 &&
+            (output[position] & 3) == 0
+        ) {
+            output[position + 1] = (label.value - (position + 2)) & 255;
+        } else {
+            output[position + 1] = label.value;
+        }
     } else {
-        output[position + 1] = labels[future_labels[i].label].value;
+        console.log('Error on line: ' + (future_labels[i].line + 1) + '\nCan\'t find label: ' + future_labels[i].label);
     }
 }
 

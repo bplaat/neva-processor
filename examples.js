@@ -249,7 +249,6 @@ player2_wins_string: db 'The right player wins!', 10, 0
 ; #######################################
 %bank 1
 
-    ; Input
 input:
     mov a, [0xfe]
     cmp a, 0
@@ -446,7 +445,6 @@ print_string_done:
 %bank 3
 
 draw:
-; Render
     mov a, 0
     mov [0xfd], a
 
@@ -503,6 +501,313 @@ draw_middle_lines_parts:
     cmp a, 255 - 15
     jb draw_middle_lines_parts
     ret
+
+draw_rect:
+    mov a, [sp + 2]
+    mov [0xfb], a
+    mov a, [sp + 3]
+    mov [0xfc], a
+    mov a, 2
+    mov [0xfd], a
+
+    mov a, [sp + 2]
+    add a, [sp + 4]
+    mov [0xfb], a
+    mov a, 3
+    mov [0xfd], a
+
+    mov a, [sp + 3]
+    add a, [sp + 5]
+    mov [0xfc], a
+    mov a, 3
+    mov [0xfd], a
+
+    mov a, [sp + 2]
+    mov [0xfb], a
+    mov a, 3
+    mov [0xfd], a
+
+    mov a, [sp + 3]
+    mov [0xfc], a
+    mov a, 3
+    mov [0xfd], a
+
+    ret 4
+
+`,
+
+`    ; A simple Snake like game
+    ; Made by Bastiaan van der Plaat
+    ; Don't run this program direct but at 32 kHz!!!
+
+    ; # Controls
+    ; DONT HOLD THE BUTTONS BUT PRESS IT REPEATEDLY!!!
+    ; Player: 'w' move up, 'a' move left, 'd' move right, 's' move down
+
+    ; # Banks
+    ; 0 = main loop, data, stack
+    ; 1 = input code
+    ; 2 = update code, string utils
+    ; 3 = draw code
+
+MAIN_BANK equ 0
+INPUT_BANK equ 1
+UPDATE_BANK equ 2
+DRAW_BANK equ 3
+
+MOVE_UP equ 0
+MOVE_LEFT equ 1
+MOVE_RIGHT equ 2
+MOVE_DOWN equ 3
+
+PLAYER_SIZE equ 10
+PLAYER_SPEED equ 1
+
+POINT_SIZE equ 5
+
+game_loop:
+    mov a, INPUT_BANK
+    bankcall a, input
+
+    mov a, UPDATE_BANK
+    bankcall a, update
+
+    mov a, DRAW_BANK
+    bankcall a, draw
+
+    mov a, [frame_counter]
+    inc a
+    mov [frame_counter], a
+    jmp game_loop
+
+frame_counter: db 0
+
+player_x: db (255 - 10) / 2
+player_y: db (255 - 10) / 2
+player_direction: db MOVE_DOWN
+player_score: db 0
+
+point_x: db 50
+point_y: db 50
+
+score_string: db 'Score: ', 0
+
+%bank INPUT_BANK
+
+input:
+    mov a, [0xfe]
+    cmp a, 0
+    je input_done
+    cmp a, 'w'
+    je input_move_up
+    cmp a, 'a'
+    je input_move_left
+    cmp a, 'd'
+    je input_move_right
+    cmp a, 's'
+    je input_move_down
+    jmp input
+input_done:
+    mov a, MAIN_BANK
+    bankret a
+
+input_move_up:
+    mov a, MOVE_UP
+    mov [player_direction], a
+    jmp input
+
+input_move_left:
+    mov a, MOVE_LEFT
+    mov [player_direction], a
+    jmp input
+
+input_move_right:
+    mov a, MOVE_RIGHT
+    mov [player_direction], a
+    jmp input
+
+input_move_down:
+    mov a, MOVE_DOWN
+    mov [player_direction], a
+    jmp input
+
+%bank UPDATE_BANK
+
+update:
+    mov a, [player_direction]
+    cmp a, MOVE_UP
+    je player_move_up
+    cmp a, MOVE_LEFT
+    je player_move_left
+    cmp a, MOVE_RIGHT
+    je player_move_right
+    cmp a, MOVE_DOWN
+    je player_move_bottom
+player_move_done:
+
+;  rect1.x < rect2.x + rect2.width &&
+;    rect1.x + rect1.width > rect2.x &&
+;    rect1.y < rect2.y + rect2.height &&
+;    rect1.y + rect1.height > rect2.y
+
+    mov a, [player_x]
+    mov b, [point_x]
+    add b, POINT_SIZE
+    cmp a, b
+    jnb player_check_done
+
+    mov a, [player_x]
+    add a, PLAYER_SIZE
+    mov b, [point_x]
+    cmp a, b
+    jna player_check_done
+
+    mov a, [player_y]
+    mov b, [point_y]
+    add b, POINT_SIZE
+    cmp a, b
+    jnb player_check_done
+
+    mov a, [player_y]
+    add a, PLAYER_SIZE
+    mov b, [point_y]
+    cmp a, b
+    jna player_check_done
+
+    push score_string
+    call print_string
+
+    mov a, [player_score]
+    inc a
+    mov [player_score], a
+
+    push a
+    call print_hex
+
+    mov a, 10
+    mov [0xff], a
+
+    mov a, [frame_counter]
+    not a, a
+    mov [point_x], a
+    mov a, [frame_counter]
+    shl a, 3
+    mov [point_y], a
+
+player_check_done:
+    mov a, MAIN_BANK
+    bankret a
+
+player_move_up:
+    mov a, [player_y]
+    sub a, PLAYER_SPEED
+    mov [player_y], a
+    cmp a, 0
+    jne player_move_done
+    mov a, 255 - 10
+    mov [player_y], a
+    jmp player_move_done
+
+player_move_left:
+    mov a, [player_x]
+    sub a, PLAYER_SPEED
+    mov [player_x], a
+    cmp a, 0
+    jne player_move_done
+    mov a, 255 - 10
+    mov [player_x], a
+    jmp player_move_done
+
+player_move_right:
+    mov a, [player_x]
+    add a, PLAYER_SPEED
+    mov [player_x], a
+    mov a, [player_x]
+    cmp a, 255 - 10
+    jne player_move_done
+    mov a, 0
+    mov [player_x], a
+    jmp player_move_done
+
+player_move_bottom:
+    mov a, [player_y]
+    add a, PLAYER_SPEED
+    mov [player_y], a
+    mov a, [player_y]
+    cmp a, 255 - 10
+    jne player_move_done
+    mov a, 0
+    mov [player_y], a
+    jmp player_move_done
+
+print_string:
+    mov a, [sp + 2]
+print_string_loop:
+    mov b, [a]
+    cmp b, 0
+    je print_string_done
+    mov [0xff], b
+    inc a
+    jmp print_string_loop
+print_string_done:
+    ret 1
+
+print_single_hex:
+    mov a, [sp + 2]
+    cmp a, 9
+    ja print_single_hex_alpha
+
+    add a, '0'
+    jmp print_single_hex_skip
+
+print_single_hex_alpha:
+    sub a, 10
+    add a, 'a'
+
+print_single_hex_skip:
+    mov [0xff], a
+    ret 1
+
+print_hex:
+    mov a, [sp + 2]
+    shr a, 4
+    push a
+    call print_single_hex
+
+    mov a, [sp + 2]
+    and a, 0xf
+    push a
+    call print_single_hex
+
+    ret 1
+
+%bank DRAW_BANK
+
+draw:
+    mov a, 0
+    mov [0xfd], a
+
+    push POINT_SIZE
+    push POINT_SIZE
+    mov a, [point_y]
+    push a
+    mov a, [point_x]
+    push a
+    call draw_rect
+
+    push PLAYER_SIZE
+    push PLAYER_SIZE
+    mov a, [player_y]
+    push a
+    mov a, [player_x]
+    push a
+    call draw_rect
+
+    mov a, 1
+    mov [0xfd], a
+
+    mov a, MAIN_BANK
+    bankret a
 
 draw_rect:
     mov a, [sp + 2]

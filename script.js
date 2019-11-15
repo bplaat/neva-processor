@@ -145,7 +145,7 @@ function parse_param (param, line, stop_early_labels) {
             return { mode: 0, data: calculation };
         }
     }
-    alert('Error on line: ' + line);
+    alert('Error on line: ' + (line + 1) + '\nCan\'t parse parameter!');
 }
 
 function assembler (data) {
@@ -205,7 +205,7 @@ function assembler (data) {
             if (parts[0] != undefined && parts[0].substring(0, parts[0].indexOf(' ')) == 'equ') {
                 var data = parse_param(parts[0].substring(parts[0].indexOf(' ')).trim(), i).data;
                 labels[label_name] = { line: i, value: data };
-                binary_lines.push('    ' + label_name + ' equ ' + format_byte(data));
+                binary_lines.push(label_name + ' equ ' + format_byte(data));
             }
 
             else if (opcode_text == '%bank') {
@@ -224,18 +224,10 @@ function assembler (data) {
                             banks[current_bank].push(c);
                             bytes.push(format_byte(c));
                         }
-                    }
-                    else if (!isNaN(parts[j])) {
-                        var c = parseInt(parts[j]) & 255;
-                        banks[current_bank].push(c);
-                        bytes.push(format_byte(c));
-                    }
-                    else {
-                        var calculation = calculate(parts[j]);
-                        if (calculation != undefined) {
-                            banks[current_bank].push(calculation);
-                            bytes.push(format_byte(calculation));
-                        }
+                    } else {
+                        var data = parse_param(parts[j], i).data;
+                        banks[current_bank].push(data);
+                        bytes.push(format_byte(data));
                     }
                 }
                 binary_lines.push(label + '    db ' + bytes.join(' '));
@@ -327,33 +319,38 @@ function assembler (data) {
     }
 
     for (var i = 0; i < future_labels.length; i++) {
-        var bank = banks[future_labels[i].bank];
-        var position = future_labels[i].position;
-        var opcode = bank[position] >> 3;
-        if (
-            ((opcode >= opcodes.bra && opcode <= opcodes.bna) || opcode == opcodes.bcall) &&
-            ((bank[position] >> 2) & 1) == 1 &&
-            (bank[position] & 3) == 0
-        ) {
-            bank[position + 1] = (labels[future_labels[i].label].value - (position + 2)) & 255;
-        } else {
-            bank[position + 1] = labels[future_labels[i].label].value;
-        }
-
-        var label = '';
-        for (var label_name in labels) {
-            if (labels[label_name].value == position && labels[label_name].line == future_labels[i].line) {
-                label = label_name + ': ' + format_byte(position);
+        var label = labels[future_labels[i].label];
+        if (label != undefined) {
+            var bank = banks[future_labels[i].bank];
+            var position = future_labels[i].position;
+            var opcode = bank[position] >> 3;
+            if (
+                ((opcode >= opcodes.bra && opcode <= opcodes.bna) || opcode == opcodes.bcall) &&
+                ((bank[position] >> 2) & 1) == 1 &&
+                (bank[position] & 3) == 0
+            ) {
+                bank[position + 1] = (label.value - (position + 2)) & 255;
+            } else {
+                bank[position + 1] = label.value;
             }
-        }
 
-        binary_lines[future_labels[i].line] =
-            label + '    ' + pad_string((bank[position] >> 3).toString(2), 5, '0') + ' ' +
-            ((bank[position] >> 2) & 1).toString(2) + ' ' +
-            pad_string((bank[position] & 3).toString(2), 2, '0') + '  ' +
-            pad_string((bank[position + 1] >> 6).toString(2), 2, '0') + ' ' +
-            pad_string((bank[position + 1] & 63).toString(2), 6, '0') + ' | ' +
-            format_byte(bank[position]) + ' ' + format_byte(bank[position + 1]);
+            var label = '';
+            for (var label_name in labels) {
+                if (labels[label_name].value == position && labels[label_name].line == future_labels[i].line) {
+                    label = label_name + ': ' + format_byte(position);
+                }
+            }
+
+            binary_lines[future_labels[i].line] =
+                label + '    ' + pad_string((bank[position] >> 3).toString(2), 5, '0') + ' ' +
+                ((bank[position] >> 2) & 1).toString(2) + ' ' +
+                pad_string((bank[position] & 3).toString(2), 2, '0') + '  ' +
+                pad_string((bank[position + 1] >> 6).toString(2), 2, '0') + ' ' +
+                pad_string((bank[position + 1] & 63).toString(2), 6, '0') + ' | ' +
+                format_byte(bank[position]) + ' ' + format_byte(bank[position + 1]);
+        } else {
+            alert('Error on line: ' + (future_labels[i].line + 1) + '\nCan\'t find label: ' + future_labels[i].label);
+        }
     }
 
     binary_label.value = '';
