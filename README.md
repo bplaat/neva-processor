@@ -79,7 +79,7 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 | 9  | or       | or                   |                        | reg |= data                                          |
 | 10 | xor      | xor                  |                        | reg ^= data                                          |
 | 11 | not      | not                  |                        | reg = ~data                                          |
-| 12 | shl      | shift lift           |                        | reg <<= data & 7                                     |
+| 12 | shl      | shift left           |                        | reg <<= data & 7                                     |
 | 13 | shr      | shift right          |                        | reg >>= data & 7                                     |
 |    |          |                      |                        |                                                      |
 | 14 | jmp      | jump                 | reg = 0                | ip = data                                            |

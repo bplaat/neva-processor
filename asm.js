@@ -27,7 +27,7 @@ var opcodes = {
     ba: 19, bnbe: 19,
     bna: 20, bbe: 20,
 
-    push: 21, pop: 22, call: 23, bcall: 23, ret: 24, bret: 24,
+    push: 21, pop: 22, call: 23, bcall: 23, ret: 24, bret: 24, ssp: 25,
 
     halt: 31
 };
