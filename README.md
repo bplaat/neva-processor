@@ -88,7 +88,7 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 | 17 | jz       | jump if zero         | reg = 0                | if (zero) ip = data                                  |
 | 18 | jnz      | jump if not zero     | reg = 0                | if (!zero) ip = data                                 |
 | 19 | ja       | jump if above        | reg = 0                | if (!carray && !zero) ip = data                      |
-| 20 | jna      | jump if not above    | reg = 0                | if (carry || zero) ip = data                         |
+| 20 | jna      | jump if not above    | reg = 0                | if (carry \|\| zero) ip = data                         |
 |    |          |                      |                        |                                                      |
 | 14 | bra      | branch               | reg = 1                | ip += data                                           |
 | 15 | bc       | branch if carry      | reg = 1                | if (carry) ip += data                                |
@@ -96,7 +96,7 @@ Because we use five bits for the instruction opcode there is room for 32 differe
 | 17 | bz       | branch if zero       | reg = 1                | if (zero) ip += data                                 |
 | 18 | bnz      | branch if not zero   | reg = 1                | if (!zero) ip += data                                |
 | 19 | ba       | branch if above      | reg = 1                | if (!carray && !zero) ip += data                     |
-| 20 | bna      | branch if not above  | reg = 1                | if (carry || zero) ip += data                        |
+| 20 | bna      | branch if not above  | reg = 1                | if (carry \|\| zero) ip += data                        |
 |    |          |                      |                        |                                                      |
 | 21 | push     | push something       | mode = 0 or 1          | mem[sp--] = data                                     |
 | 22 | pop      | pop something        | mode = 2 or 3          | reg = mem[++sp]                                      |
