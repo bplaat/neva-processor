@@ -26,7 +26,7 @@ opcode reg mode | imm
 ```
 
 ### Register encoding:
-The other encoding is almost the same the only difference is that the immediate data byte is changed to one source register selector and a 6-bit displacement.
+The other encoding is almost the same the only difference is that the immediate data byte is changed to one source register selector and a 6-bit signed displacement.
 ```
   5     1   2   |  2   6
 opcode reg mode | reg dis
@@ -49,15 +49,25 @@ zero flag = 0
 ## Modes
 Like I sad each instruction has two bits that select a mode which the instruction is run in. This mode chooses what the source data is for the instruction. There are four different modes:
 - The first is that the next immediate byte is used as the data.
-- The second is that the first two bits of the next byte is used to select a register which contains the data and then adds the displacement.
+- The second is that the first two bits of the next byte is used to select a register which contains the data and then adds the signed displacement.
 - The third mode is that de next immediate byte is used as a address for the memory and the read byte is used as data.
-- The fourth mode reads a register adds the displacement and uses it as the address for the memory and uses the byte that it reads as data.
+- The fourth mode reads a register adds the signed displacement and uses it as the address for the memory and uses the byte that it reads as data.
 ```
 0 = data = imm
 1 = data = reg + dis
 2 = address = imm, data = [address]
 3 = address = reg + dis, data = [address]
 ```
+
+## Memory Banking
+Originally, the Neva processor only had an 8-bit address bus. After a while I discovered that this was a little too little for larger programs such as: the game pong. So I opted to add a simple banking system.
+
+The banking system works as follows: there are three bank registers, the code, the data and the stack bank and you can adjust these bank registers with certain bank instructions:
+- The code bank works as the higher byte of the instruction fetch cycle.
+- The data bank works as the higher byte of the load and store instructions.
+- The stack bank works as the higher byte of stack instructions.
+
+I have chosen to split these three bank registers as this gives the possibility to use for example a data bank and different code banks or to use a code bank and different data banks. **Banks are so far only supported in the JavaScript simulator**. Thanks to this banking system, the Neva processor now has a 16-bit address bus and can now use 2 ^ 16 = 65536 bytes of memory!
 
 ## Instructions
 Because we use five bits for the instruction opcode there is room for 32 different instructions:
@@ -142,16 +152,6 @@ There are also some pseudo instructions which the assembler translates to other 
 | bnbe | branch if not below or equel | bnbe data       | ba data           |
 | bbe  | branch below or equel        | bbe data        | bna data          |
 
-## Memory Banking
-Originally, the Neva processor only had an 8-bit address bus. After a while I discovered that this was a little too little for larger programs such as: the game pong. So I opted to add a simple banking system.
-
-The banking system works as follows: there are three bank registers, the code, the data and the stack bank and you can adjust these bank registers with certain bank instructions:
-- The code bank works as the higher byte of the instruction fetch cycle.
-- The data bank works as the higher byte of the load and store instructions.
-- The stack bank works as the higher byte of stack instructions.
-
-I have chosen to split these three bank registers as this gives the possibility to use for example a data bank and different code banks or to use a code bank and different data banks. Banks are so far only supported in the JavaScript simulator. Thanks to this banking system, the Neva processor now has a 16-bit address bus and can now use 2 ^ 16 = 65536 bytes of memory!
-
 ## Memory I/O interface
 All input and output options of the computer are based on memory addresses. So you need to read or write to some specific addresses to communicate with other devices:
 ```
@@ -186,7 +186,7 @@ I've also some ideas for the second Neva processor:
 - As much as possible compatible at assembler level (for portability)
 - More registers 4, 6 or 8 (for better performance)
 - More flags and jump / branch instructions like: jump if less signed (for more flexibility)
-- Direct write access to the stack pointer as a register (for more flexibility)
+- Direct write access to the stack pointer, and banks as registers (for more flexibility)
 - Variable instruction length encoding (for smaller code size and better performance)
 
 I think it would also be nice to make a simple VGA video card / generator for this new processor that can do the following:
