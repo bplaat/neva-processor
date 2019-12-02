@@ -232,7 +232,7 @@ for (var i = 0; i < lines.length; i++) {
                     var param = parse_param(parts[0], i);
                     instruction[0] = opcode | (1 << 2) | (param.mode + 2);
                     instruction[1] = param.data;
-                } else if (((opcode >= opcodes.bra && opcode <= opcodes.bna) || opcode == opcodes.bcall) && opcode_text.charAt(0) == 'b') {
+                } else if (((opcode >= (opcodes.bra << 3) && opcode <= (opcodes.bna << 3)) || opcode == (opcodes.bcall << 3)) && opcode_text.charAt(0) == 'b') {
                     var param = parse_param(parts[0], i, true);
                     instruction[0] = opcode | (1 << 2) | param.mode;
                     instruction[1] = param.mode == 0 ? ((param.data - 2) & 255) : param.data;
