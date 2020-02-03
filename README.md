@@ -143,7 +143,7 @@ There are also some pseudo instructions which the assembler translates to other 
 | jnbe | jump if not below or equel   | jnbe data       | ja data           |
 | jbe  | jump if below or equel       | jbe data        | jna data          |
 |      |                              |                 |                   |
-| bb   | branch if equel              | bb data         | bc data           |
+| bb   | branch if below              | bb data         | bc data           |
 | bnae | branch if not above or equel | bnae data       | bc data           |
 | bnb  | branch if not below          | bnb data        | bnc data          |
 | bae  | branch if above or equel     | bae data        | bnc data          |
@@ -189,12 +189,15 @@ I've also some ideas for the second Neva processor:
 - Direct write access to the stack pointer, and banks as registers (for more flexibility)
 - Variable instruction length encoding (for smaller code size and better performance)
 
-I think it would also be nice to make a simple VGA video card / generator for this new processor that can do the following:
+## The Taro video controller
+I think it would also be nice to make a simple VGA video card / generator / controller for this new processor that can do the following:
 
-- It outputs a VGA signal
+- It outputs a VGA signal (640x480)
 - It has it's own video ram for fast access
 - It only has text modes with a 8x8 pixel character font with the [Code page 437](https://en.wikipedia.org/wiki/Code_page_437) symbols
-- The character font can be changed
+- The character font can be changed because it's in video ram
 - Different text mode sizes: 20x15, 40x30, 80x60
-- 4-bit color so 16 different colors in a nice pallet
+- 4-bit color so 16 different colors in a nice color pallet
 - It is connect via a small memory interface with the Neva II processor
+
+You can find a simple working example in the [taro.html](taro.html) file
