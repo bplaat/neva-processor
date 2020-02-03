@@ -200,4 +200,4 @@ I think it would also be nice to make a simple VGA video card / generator / cont
 - 4-bit color so 16 different colors in a nice color pallet
 - It is connect via a small memory interface with the Neva II processor
 
-You can find a simple working example in the [taro.html](taro.html) file
+You can find a simple working example in the [taro.html](https://neva-processor.ml/taro.html) file
