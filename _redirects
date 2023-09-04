@@ -1,2 +1,0 @@
-# Redirect default Netlify subdomain to primary domain
-https://neva-processor.netlify.com/* https://neva-processor.ml/:splat 301!
